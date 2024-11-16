@@ -3,9 +3,9 @@ package ru.nsu.fit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class MainTest {
+class MainTest {
     @Test
-    public void testSum() {
+    void testSum() {
         int[][] pixelArray = {
                 {0, 0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0, 0},
