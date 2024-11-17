@@ -1,57 +1,51 @@
 package ru.nsu.fit;
 
+
 public class Main {
 
-    public static int sum(int radius, int[][] pixelArray) {
-        int y1, y2, x1, x2, Q = 0;
-        int diameter = 2 * radius;
-        // Обходим картинку сверху вниз. Для этого нам нужно знать верхнюю границу рамки,
-        // чтобы не выйти за границы картинки снизу. Так вот k итерируется по всем возможным
-        // верхним границам рамок (если дорисовать рамку до квадрата, то k совпадет с левым
-        // верхним углом, который итеративно двигается вниз).
-        // ---
-        // Отвечает за смещение рамки по вертикали.
-        for (int k = 0; k < pixelArray.length - diameter; k++) {
-            // Обходим картинку слева направо. Для этого нам нужно знать левую границу рамки,
-            // чтобы не выйти за границы картинки справа. Так вот j итерируется по всем возможным
-            // левым границам рамок (если дорисовать рамку до квадрата, то j совпадет с левым
-            // верхним углом, который итеративно двигается <-- --> ).
-            // ---
-            // Отвечает за смещение рамки по горизонтали.
-            for (int j = 0; j < pixelArray[0].length - diameter; j++) {
-                // Начинаем обход области, попадающей в круглую рамку, сверху вниз и снизу вверх одновременно.
-                // Можем так сделать, ибо рамка симметрична относительно горизонтали.
-                // Первое подмножество всегда состоит из 3 пикселей
-                y1 = k; // подмножество пикселей, совпадающее с верхней границей рамки
-                y2 = k + diameter; // подмножество пикселей, совпадающее с нижней границей рамки
-                x1 = j + radius - 1; // левый край границы рамки
-                x2 = j + radius + 1; // правый край границы рамки
-                while (true) {
-                    // Подмножество пикселей, совпадающее с массивом пикселей от x1 до x2
-                    for (int i = x1; i <= x2; i++) {
-                        Q += pixelArray[y1][i];
-                        Q += pixelArray[y2][i];
-                    }
-                    y1 += 1; // смещаемся на одну строку вниз
-                    y2 -= 1; // смещаемся на одну строку вверх
-                    if (y1 == y2) { // если дошли до середины рамки - считаем последний массив и break
-                        for (int i = x1; i <= x2; i++) {
-                            Q += pixelArray[y1][i];
-                        }
-                        break;
-                    }
-                    x1 -= 1;
-                    x2 += 1;
+    public static void main(String[] args) {
+        TiffProcessor tiffProcessor = new TiffProcessor("src/main/resources/Moon_IR_7/cropped.tif");
+        int[][] pixelArray = tiffProcessor.getTiffMatrix();
+        int radius = 128;
+
+        // код для сбора аналитической инфы о яркости пикселей
+        int min = -1, max = Integer.MAX_VALUE, xMin = -1, xMax = -1, yMin = -1, yMax = -1;
+        double[] newArray = new double[pixelArray.length];
+        for (int i = 0; i < pixelArray.length; i++) {
+            int sum = 0;
+            for (int j = 0; j < pixelArray[0].length; j++) {
+                sum += pixelArray[i][j];
+                if (pixelArray[i][j] < max) {
+                    max = pixelArray[i][j];
+                    xMax = i;
+                    yMax = j;
+                }
+                if (pixelArray[i][j] > min) {
+                    min = pixelArray[i][j];
+                    xMin = i;
+                    yMin = j;
                 }
             }
+            newArray[i] = (double) sum / pixelArray[0].length;
         }
-        return Q;
-    }
+        double sum = 0;
+        for (double v : newArray) {
+            sum += v;
+        }
+        System.out.println(sum / newArray.length);
+        System.out.println(min + "x=" + xMin + " y=" + yMin);
+        System.out.println(max + "x=" + xMax + " y=" + yMax);
+        for (int i = 0; i < 150; i++) {
+            System.out.print(pixelArray[i][0] + " ");
+        }
+        System.out.println(pixelArray[200][200]);
+        tiffProcessor.highlightArea(xMin, yMin, radius, 65535);
+        tiffProcessor.highlightArea(xMax, yMax, radius, 65535);
+        tiffProcessor.showTiff();
 
-    public static void main(String[] args) {
-        int[][] pixelArray = Utils.tiffToMatrix("src/main/resources/Moon_IR_7/012.tif");
-        int radius = 50;
-        var Q = sum(radius, pixelArray);
 
+//        SlidingWindow slidingWindow = new SlidingWindow(tiffProcessor);
+//        slidingWindow.slidingWindow(pixelArray, radius, Integer.MAX_VALUE);
+//        tiffProcessor.showTiff();
     }
 }
