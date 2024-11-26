@@ -4,18 +4,24 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // TODO: А можно сразу стек изображений открывать?
 
 // TODO: в будущем можно распараллелить обработку и подсчет моментов для тифов
 public class TiffProcessor {
+    private static final Logger LOGGER = LogManager.getLogger(TiffProcessor.class);
+
     private final ImagePlus imagePlus;
     private ImagePlus colorImage;
 
     public TiffProcessor(String path) {
         imagePlus = IJ.openImage(path);
         if (imagePlus == null || imagePlus.getBitDepth() != 16) {
-            System.out.println("Изображение не найдено или не является 16-битным.");
+            String exMessage = "The image was not found or is not 16-bit.";
+            LOGGER.error(exMessage);
+            throw new IllegalArgumentException(exMessage);
         }
     }
 
@@ -39,10 +45,9 @@ public class TiffProcessor {
         colorImage.getProcessor().putPixel(x, y, color); // Красный цвет
     }
 
-    // TODO: мб со сдвигами поиграться?
-    private boolean isCircle(int centerX, int centerY, int x, int y, int radius) {
+    private boolean isCircle(int centerX, int centerY, double x, double y, double squareRadius) {
         var res = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
-        return res <= Math.pow(radius, 2) && Math.pow(radius, 2) - 500 <= res;
+        return res <= squareRadius && squareRadius - 500 <= res; // TODO: -500 задает толщину окружности
     }
 
     public void highlightArea(int centerX, int centerY, int radius, int color) {
@@ -52,12 +57,12 @@ public class TiffProcessor {
         ImageProcessor colorProcessor = colorImage.getProcessor();
         int height = colorImage.getHeight();
         int width = colorImage.getWidth();
+        double squareRadius = Math.pow(radius, 2);
         // Ограничиваем прямоугольную область
-        // for (int x = Math.max(0, centerX - radius); x <= Math.min(rows - 1, centerX + radius); x++) {
         for (int x = Math.max(0, centerX - radius); x <= Math.min(height - 1, centerX + radius); x++) {
             for (int y = Math.max(0, centerY - radius); y <= Math.min(width - 1, centerY + radius); y++) {
                 // Проверяем, находится ли точка внутри окружности
-                if (isCircle(centerX, centerY, x, y, radius)) {
+                if (isCircle(centerX, centerY, x, y, squareRadius)) {
                     colorProcessor.putPixel(x, y, color);
                 }
             }

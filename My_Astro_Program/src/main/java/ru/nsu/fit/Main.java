@@ -1,7 +1,11 @@
 package ru.nsu.fit;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Main {
+    private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
         // Вот это можно вынести в параметры командной строки
@@ -10,14 +14,14 @@ public class Main {
         int threshold = 25_000_000;
 
         TiffProcessor tiffProcessor = new TiffProcessor(pathToImage);
-        SlidingWindow slidingWindow = new SlidingWindow(tiffProcessor);
+        SlidingWindowProcessor slidingWindowProcessor = new SlidingWindowProcessor(tiffProcessor);
         double start = System.currentTimeMillis();
-        slidingWindow.runSlidingWindow(radius, threshold);
+        slidingWindowProcessor.runSlidingWindow(radius, threshold);
         double end = System.currentTimeMillis();
         var timeSec = (end - start) / 1000;
-        System.out.println("Time: " + timeSec + " sec, " + timeSec / 60 + " min");
+        LOGGER.info("Time: {} sec, {} min", timeSec, timeSec / 60);
         var redColor = (255 << 16);
         tiffProcessor.highlightArea(radius, tiffProcessor.getWidth() - radius, radius, redColor);
-        tiffProcessor.saveColorTiff("src/main/resources/Moon_IR_7/color_012.tif");
+        tiffProcessor.saveColorTiff("src/main/resources/Moon_IR_7/color_012_2.tif");
     }
 }
