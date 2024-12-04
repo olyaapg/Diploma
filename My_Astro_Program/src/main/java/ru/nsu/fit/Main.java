@@ -8,21 +8,22 @@ import org.apache.logging.log4j.Logger;
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-    // В аргументы первым передается путь к файлу, затем радиус окна и путь, куда сохранять итоговый файл
+    // В аргументы первым передается путь к файлу, затем путь, куда сохранять итоговый файл
     public static void main(String[] args) {
         String pathToImage = args[0];
-        int radius = Integer.parseInt(args[1]);
-        int threshold = 25_000_000; // можно менять
+        String pathToSave = args[1];
+        int radius = 64; // TODO: вынести для настройки пользователем?
+        int threshold = 30_000_000; // TODO: менять при изменении радиуса окна
 
         TiffProcessor tiffProcessor = new TiffProcessor(pathToImage);
         SlidingWindowProcessor slidingWindowProcessor = new SlidingWindowProcessor(tiffProcessor);
         slidingWindowProcessor.runSlidingWindow(radius, threshold);
 
         // удалить потом
-        var redColor = (255 << 16);
-        tiffProcessor.highlightArea(radius, tiffProcessor.getHeight() - radius, radius, redColor);
-        tiffProcessor.saveColorTiff(args[2]);
+//        var redColor = (255 << 16);
+//        tiffProcessor.highlightArea(radius, tiffProcessor.getHeight() - radius, radius, redColor);
+        tiffProcessor.saveColorTiff(pathToSave);
 
-        LOGGER.info("The result was saved to \"{}\"", args[2]);
+        LOGGER.info("The result was saved to \"{}\"", pathToSave);
     }
 }
