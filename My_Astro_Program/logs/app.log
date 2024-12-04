@@ -1,0 +1,52 @@
+2024-12-04 14:11:49 [main] INFO : The processing of the image "src/main/resources/Moon_IR_7/013.tif" has begun
+2024-12-04 14:11:49 [main] INFO : Quick func is working
+2024-12-04 14:11:49 [main] INFO : Progress of the sliding window: 0%
+2024-12-04 14:11:51 [main] INFO : Progress of the sliding window: 10%
+2024-12-04 14:11:51 [main] INFO : Progress of the sliding window: 20%
+2024-12-04 14:11:52 [main] INFO : Progress of the sliding window: 30%
+2024-12-04 14:11:53 [main] INFO : Progress of the sliding window: 40%
+2024-12-04 14:11:53 [main] INFO : Progress of the sliding window: 50%
+2024-12-04 14:11:54 [main] INFO : Progress of the sliding window: 60%
+2024-12-04 14:11:55 [main] INFO : Progress of the sliding window: 70%
+2024-12-04 14:11:55 [main] INFO : Progress of the sliding window: 80%
+2024-12-04 14:11:56 [main] INFO : Progress of the sliding window: 90%
+2024-12-04 14:11:57 [main] INFO : Time: 7.43 sec, 0.12383333333333332 min
+2024-12-04 14:12:11 [main] INFO : The processing of the image "src/main/resources/Moon_IR_7/013.tif" has begun
+2024-12-04 14:12:11 [main] INFO : Old func is working
+2024-12-04 14:12:11 [main] INFO : Progress of the sliding window: 0%
+2024-12-04 14:12:21 [main] INFO : Progress of the sliding window: 10%
+2024-12-04 14:12:40 [main] INFO : Progress of the sliding window: 20%
+2024-12-04 14:12:51 [main] INFO : Progress of the sliding window: 30%
+2024-12-04 14:13:02 [main] INFO : Progress of the sliding window: 40%
+2024-12-04 14:13:13 [main] INFO : Progress of the sliding window: 50%
+2024-12-04 14:13:23 [main] INFO : Progress of the sliding window: 60%
+2024-12-04 14:13:34 [main] INFO : Progress of the sliding window: 70%
+2024-12-04 14:13:45 [main] INFO : Progress of the sliding window: 80%
+2024-12-04 14:13:56 [main] INFO : Progress of the sliding window: 90%
+2024-12-04 14:14:04 [main] INFO : Time: 112.661 sec, 1.8776833333333334 min
+2024-12-04 14:16:58 [main] INFO : The processing of the image "src/main/resources/Moon_IR_7/013.tif" has begun
+2024-12-04 14:16:59 [main] INFO : Quick func is working
+2024-12-04 14:16:59 [main] INFO : Progress of the sliding window: 0%
+2024-12-04 14:16:59 [main] INFO : Progress of the sliding window: 10%
+2024-12-04 14:17:00 [main] INFO : Progress of the sliding window: 20%
+2024-12-04 14:17:01 [main] INFO : Progress of the sliding window: 30%
+2024-12-04 14:17:02 [main] INFO : Progress of the sliding window: 40%
+2024-12-04 14:17:02 [main] INFO : Progress of the sliding window: 50%
+2024-12-04 14:17:03 [main] INFO : Progress of the sliding window: 60%
+2024-12-04 14:17:04 [main] INFO : Progress of the sliding window: 70%
+2024-12-04 14:17:05 [main] INFO : Progress of the sliding window: 80%
+2024-12-04 14:17:06 [main] INFO : Progress of the sliding window: 90%
+2024-12-04 14:17:06 [main] INFO : Time: 7.44 sec, 0.12400000000000001 min
+2024-12-04 14:20:54 [main] INFO : The processing of the image "src/main/resources/Moon_IR_7/013.tif" has begun
+2024-12-04 14:20:54 [main] INFO : Old func is working
+2024-12-04 14:20:54 [main] INFO : Progress of the sliding window: 0%
+2024-12-04 14:21:03 [main] INFO : Progress of the sliding window: 10%
+2024-12-04 14:21:16 [main] INFO : Progress of the sliding window: 20%
+2024-12-04 14:21:33 [main] INFO : Progress of the sliding window: 30%
+2024-12-04 14:21:45 [main] INFO : Progress of the sliding window: 40%
+2024-12-04 14:21:57 [main] INFO : Progress of the sliding window: 50%
+2024-12-04 14:22:08 [main] INFO : Progress of the sliding window: 60%
+2024-12-04 14:22:20 [main] INFO : Progress of the sliding window: 70%
+2024-12-04 14:22:31 [main] INFO : Progress of the sliding window: 80%
+2024-12-04 14:22:42 [main] INFO : Progress of the sliding window: 90%
+2024-12-04 14:22:51 [main] INFO : Time: 116.592 sec, 1.9432 min
