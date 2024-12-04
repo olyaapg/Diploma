@@ -8,16 +8,12 @@ public class SlidingWindowProcessor {
     private static final Logger LOGGER = LogManager.getLogger(SlidingWindowProcessor.class);
 
     private final TiffProcessor tiffProcessor;
-    private int[][] matrix;
+    private final int[][] matrix;
     private boolean[][] mask;
 
     public SlidingWindowProcessor(TiffProcessor tiffProcessor) {
         this.tiffProcessor = tiffProcessor;
         matrix = tiffProcessor.getOriginTiffMatrix();
-    }
-
-    public void setMatrix(int[][] matrix) {
-        this.matrix = matrix;
     }
 
     private void createMask(int radius) {
@@ -50,18 +46,14 @@ public class SlidingWindowProcessor {
         return sum;
     }
 
-    private int calcWindow(int centerX, int centerY, int radius) {
+    private int calcWindow(int centerX, int centerY, int startX, int endX, int endY) {
         int sum = 0;
         // Ограничиваем прямоугольную область
-        int startX = Math.max(0, centerX - radius);
-        int endX = Math.min(matrix[0].length - 1, centerX);
-        int startY = Math.max(0, centerY - radius);
-        int endY = Math.min(matrix.length - 1, centerY);
         for (int x = startX; x <= endX; x++) {
             int x1 = 2 * centerX - x;
-            for (int y = startY; y <= endY; y++) {
+            for (int y = 0; y <= endY; y++) {
                 // Проверяем, находится ли точка внутри окружности с помощью маски
-                if (!mask[x - startX][y - startY]) {
+                if (!mask[x - startX][y]) {
                     continue;
                 }
                 int y1 = 2 * centerY - y;
@@ -72,25 +64,20 @@ public class SlidingWindowProcessor {
         return sum;
     }
 
-    private int calcNextWindow(int nextCenterX, int nextCenterY, int radius, int prevSum) {
-        int startX = Math.max(0, nextCenterX - radius);
-        int endX = Math.min(matrix[0].length - 1, nextCenterX);
-        int startY = Math.max(0, nextCenterY - radius);
-        int endY = Math.min(matrix.length - 1, nextCenterY);
+    private int calcNextWindow(int nextCenterX, int nextCenterY, int prevSum, int startX, int endX, int startY, int endY) {
         for (int x = startX; x <= endX; x++) {
             var x1 = 2 * nextCenterX - x;
             for (int y = startY; y <= endY; y++) {
-                if (!mask[x - startX][y - startY]) {
-                    continue;
+                if (mask[x - startX][y - startY]) {
+                    var y1 = 2 * nextCenterY - y;
+                    prevSum -= matrix[y - 1][x];
+                    prevSum += matrix[y1][x];
+                    if (x != x1) {
+                        prevSum -= matrix[y - 1][x1];
+                        prevSum += matrix[y1][x1];
+                    }
+                    break;
                 }
-                var y1 = 2 * nextCenterY - y;
-                prevSum -= matrix[y - 1][x];
-                prevSum += matrix[y1][x];
-                if (x != x1) {
-                    prevSum -= matrix[y - 1][x1];
-                    prevSum += matrix[y1][x1];
-                }
-                break;
             }
         }
         return prevSum;
@@ -101,84 +88,26 @@ public class SlidingWindowProcessor {
             LOGGER.error("The radius must not be zero!");
             return;
         }
-        LOGGER.info("Quick func is working");
-
         int rows = matrix[0].length; // 2822
         int cols = matrix.length; // 4144
         createMask(radius);
         int progress = rows / 10; // нужно для отслеживания прогресса
-        LOGGER.info("Progress of the sliding window: 0%");
+        LOGGER.debug("Progress of the sliding window: 0%");
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
-            var sum = calcWindow(x, radius, radius);
+            var sum = calcWindow(x, radius, Math.max(0, x - radius), Math.min(matrix[0].length - 1, x), Math.min(matrix.length - 1, radius));
             if (sum <= threshold) {
                 tiffProcessor.highlightPixel(radius, x, 255);
             }
             for (int y = radius + 1; y < cols - radius; y++) {
-                sum = calcNextWindow(x, y, radius, sum);
+                sum = calcNextWindow(x, y, sum, Math.max(0, x - radius), Math.min(matrix[0].length - 1, x), Math.max(0, y - radius), Math.min(matrix.length - 1, y));
                 if (sum <= threshold) {
                     tiffProcessor.highlightPixel(y, x, (255 << 16));
                 }
             }
             if (x % progress == 0) {
-                LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
-            }
-        }
-    }
-
-
-    public void runSlidingWindowOLD(int radius, int threshold) {
-        if (radius == 0) {
-            LOGGER.error("The radius must not be zero!");
-            return;
-        }
-        LOGGER.info("Old func is working");
-
-        int rows = matrix[0].length; // 2822
-        int cols = matrix.length; // 4144
-        createMask(radius);
-        int progress = rows / 10; // нужно для отслеживания прогресса
-        LOGGER.info("Progress of the sliding window: 0%");
-        // Перебираем центральные точки
-        // Пока что только с полным вхождением окна в границы картинки
-        for (int x = radius; x < rows - radius; x++) {
-            for (int y = radius; y < cols - radius; y++) {
-                var sum = calcWindow(x, y, radius);
-                if (sum <= threshold) {
-                    tiffProcessor.highlightPixel(y, x, (255 << 16));
-                }
-            }
-            if (x % progress == 0) {
-                LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
-            }
-        }
-    }
-
-    public void runSlidingWindowCompare(int radius, int threshold) {
-        if (radius == 0) {
-            LOGGER.error("The radius must not be zero!");
-            return;
-        }
-        int rows = matrix[0].length; // 2822
-        int cols = matrix.length; // 4144
-        createMask(radius);
-        int progress = rows / 10; // нужно для отслеживания прогресса
-        LOGGER.info("Progress of the sliding window: 0%");
-        // Перебираем центральные точки
-        // Пока что только с полным вхождением окна в границы картинки
-        for (int x = radius; x < rows - radius; x++) {
-            var sum = calcWindow(x, radius, radius);
-            var prevSum = sum;
-            for (int y = radius + 1; y < cols - radius; y++) {
-                sum = calcWindow(x, y, radius);
-                prevSum = calcNextWindow(x, y, radius, prevSum);
-                if (prevSum != sum) {
-                    throw new AssertionError("Суммы не равны");
-                }
-            }
-            if (x % progress == 0) {
-                LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
+                LOGGER.debug("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
     }
