@@ -46,29 +46,34 @@ public class SlidingWindowProcessor {
         return sum;
     }
 
-    private long calcWindow(int centerX, int centerY, int startX, int endX, int endY) {
+    private long sumUpWindow(int centerX, int startX, int endX, int endY, int radius) {
         long sum = 0;
+        int doubleCenterX = 2 * centerX;
+        int doubleRadius = 2 * radius;
         // Ограничиваем прямоугольную область
         for (int x = startX; x <= endX; x++) {
-            int x1 = 2 * centerX - x;
+            int x1 = doubleCenterX - x;
+            int offsetX = x - startX;
             for (int y = 0; y <= endY; y++) {
                 // Проверяем, находится ли точка внутри окружности с помощью маски
-                if (!mask[x - startX][y]) {
-                    continue;
+                if (mask[offsetX][y]) {
+                    int y1 = doubleRadius - y;
+                    sum += calcReflectedPixels(x, y, x1, y1);
                 }
-                int y1 = 2 * centerY - y;
-                sum += calcReflectedPixels(x, y, x1, y1);
             }
         }
         return sum;
     }
 
-    private long calcNextWindow(int nextCenterX, int nextCenterY, long prevSum, int startX, int endX, int startY, int endY) {
+    private long calcNextWindow(int centerX, int centerY, int startX, int endX, int startY, int endY, long prevSum) {
+        int doubleCenterX = 2 * centerX;
+        int doubleCenterY = 2 * centerY;
         for (int x = startX; x <= endX; x++) {
-            var x1 = 2 * nextCenterX - x;
+            int offsetX = x - startX;
+            var x1 = doubleCenterX - x;
             for (int y = startY; y <= endY; y++) {
-                if (mask[x - startX][y - startY]) {
-                    var y1 = 2 * nextCenterY - y;
+                if (mask[offsetX][y - startY]) {
+                    var y1 = doubleCenterY - y;
                     prevSum -= matrix[y - 1][x];
                     prevSum += matrix[y1][x];
                     if (x != x1) { // предполагается, что мы всегда сдвигаем окно только вдоль одной оси, а не двух
@@ -82,46 +87,50 @@ public class SlidingWindowProcessor {
         return prevSum;
     }
 
+    private void calcSumsForDipoleMoment(int x, int y, int x1, int y1, int centerY, int[] sums) {
+        sums[0] = matrix[y][x];
+        sums[1] = matrix[y][x];
+        sums[2] = 0;
+        sums[3] = 0;
+        if (x1 != x) {
+            sums[2] += matrix[y][x1];
+            sums[1] += matrix[y][x1];
+        }
+        if (y1 != y) {
+            sums[0] += matrix[y1][x];
+            sums[3] += matrix[y1][x];
+            if (x1 != x) {
+                sums[2] += matrix[y1][x1];
+                sums[3] += matrix[y1][x1];
+            }
+            sums[3] *= (y1 - centerY);
+        }
+    }
+
     // TODO: проверить всё на long и int (суммы и т.п.)
-    private int[] calcDipoleMoment(int centerX, int centerY, int startX, int endX, int startY, int endY, long sum) {
-        double pX = 0;
-        double pY = 0;
-        int threshold = 100_000_000;
+    private void calcDipoleMomentWindow(int centerX, int centerY, int startX, int endX, int startY, int endY) {
+        double[] pXpY = new double[]{0, 0};
+        int threshold = 250_000_000;
+        int doubleCenterX = 2 * centerX;
+        int doubleCenterY = 2 * centerY;
+        int[] sums = new int[4];
         for (int x = startX; x <= endX; x++) {
-            var x1 = 2 * centerX - x;
+            int offsetX = x - startX;
+            int x1 = doubleCenterX - x;
             double distanceX = (double) x - centerX;
             double distanceX1 = (double) x1 - centerX;
             for (int y = startY; y <= endY; y++) {
-                if (mask[x - startX][y - startY]) {
-                    var y1 = 2 * centerY - y;
-                    double distanceY = (double) y - centerY;
-                    pX += distanceX * matrix[y][x];
-                    pY += distanceY * matrix[y][x];
-                    if (x1 != x) {
-                        pX += distanceX1 * matrix[y][x1];
-                        pY += distanceY * matrix[y][x1];
-                    }
-                    if (y1 != y) {
-                        double distanceY1 = (double) y1 - centerY;
-                        pX += distanceX * matrix[y1][x];
-                        pY += distanceY1 * matrix[y1][x];
-                        if (x1 != x) {
-                            pX += distanceX1 * matrix[y1][x1];
-                            pY += distanceY1 * matrix[y1][x1];
-                        }
-                    }
-                }
-            }
-            if (pX >= threshold || pY >= threshold) {
-                return new int[]{0, 0};
+                if (!mask[offsetX][y - startY]) continue;
+                int y1 = doubleCenterY - y;
+                double distanceY = (double) y - centerY;
+                calcSumsForDipoleMoment(x, y, x1, y1, centerY, sums);
+                pXpY[0] += distanceX * sums[0] + distanceX1 * sums[2];
+                pXpY[1] += distanceY * sums[1] + sums[3];
             }
         }
-//        int centerBrightnessX = (int) Math.round(pX / sum);
-//        int centerBrightnessY = (int) Math.round(pY / sum);
-        if (Math.sqrt(Math.pow(pX, 2) + Math.pow(pY, 2)) < threshold) {
+        if (Math.hypot(pXpY[0], pXpY[1]) < threshold) {
             tiffProcessor.highlightPixel(centerY, centerX, 255);
         }
-        return new int[]{0, 0};
     }
 
     public void runSlidingWindow(int radius, int threshold) {
@@ -131,27 +140,28 @@ public class SlidingWindowProcessor {
         }
         int rows = matrix[0].length; // 2822
         int cols = matrix.length; // 4144
-
         createMask(radius);
         int progress = rows / 10; // нужно для отслеживания прогресса
         LOGGER.info("Progress of the sliding window: 0%");
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
+        int endY = Math.min(matrix.length - 1, radius);
+        var redColor = (255 << 16);
         for (int x = radius; x < rows - radius; x++) {
             int startX = Math.max(0, x - radius);
             int endX = Math.min(matrix[0].length - 1, x);
-            long sum = calcWindow(x, radius, startX, endX, radius);
+            long sum = sumUpWindow(x, startX, endX, endY, radius);
             if (sum <= threshold) {
                 tiffProcessor.highlightPixel(radius, x, (255 << 16));
             } else {
-                calcDipoleMoment(x, radius, startX, endX, 0, radius, sum);
+                calcDipoleMomentWindow(x, radius, startX, endX, 0, endY);
             }
             for (int y = radius + 1; y < cols - radius; y++) {
-                sum = calcNextWindow(x, y, sum, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y));
+                sum = calcNextWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y), sum);
                 if (sum <= threshold) {
-                    tiffProcessor.highlightPixel(y, x, (255 << 16));
+                    tiffProcessor.highlightPixel(y, x, redColor);
                 } else {
-                    calcDipoleMoment(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y), sum);
+                    calcDipoleMomentWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y));
                 }
             }
             if (x % progress == 0) {

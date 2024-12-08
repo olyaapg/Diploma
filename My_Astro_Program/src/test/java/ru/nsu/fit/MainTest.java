@@ -15,60 +15,67 @@ import static org.junit.jupiter.api.Assertions.*;
 class MainTest {
     private static final Logger LOGGER = LogManager.getLogger(MainTest.class);
     private final String dirOriginals = "src/test/resources/original_images/";
-    private final String dirActualProcessed = "src/test/resources/actual_processed_images/";
-    private final String dirExpectedProcessed = "src/test/resources/expected_processed_images/";
+
+    private void run(String pathToImage, String pathToSave, String pathToExpected, String nameTest) {
+        LOGGER.info("{} started", nameTest);
+        double start = System.currentTimeMillis();
+        Main.main(new String[]{pathToImage, pathToSave});
+        double end = System.currentTimeMillis();
+        var timeSec = (end - start) / 1000;
+        LOGGER.info("{} ~ Time: {} sec, {} min", nameTest, timeSec, timeSec / 60);
+
+        // Загрузка изображений для сравнения
+        BufferedImage expectedImage = ImageComparisonUtil.readImageFromResources(pathToExpected);
+        BufferedImage actualImage = ImageComparisonUtil.readImageFromResources(pathToSave);
+        // Создание объекта ImageComparison и сравнение изображений
+        ImageComparisonResult imageComparisonResult = new ImageComparison(expectedImage, actualImage).compareImages();
+        // Проверка результата
+        assertEquals(ImageComparisonState.MATCH, imageComparisonResult.getImageComparisonState());
+
+    }
 
     @Test
-    void testCropped() {
+    void testZeroMoment() {
+        String dirActual = "src/test/resources/test_zero_moment/actual/";
+        String dirExpected = "src/test/resources/test_zero_moment/expected/";
+
+        // cropped.tif
         String pathToImage = dirOriginals + "cropped.tif";
-        String pathToSave = dirActualProcessed + "color_cropped.tif";
-        String pathToExpected = dirExpectedProcessed + "color_cropped.tif";
+        String pathToSave = dirActual + "color_cropped.tif";
+        String pathToExpected = dirExpected + "color_cropped.tif";
 
-        double start = System.currentTimeMillis();
-        Main.main(new String[]{pathToImage, pathToSave});
-        double end = System.currentTimeMillis();
-        var timeSec = (end - start) / 1000;
-        LOGGER.info("testCropped ~ Time: {} sec, {} min", timeSec, timeSec / 60);
+        run(pathToImage, pathToSave, pathToExpected, "testZeroMoment ~ cropped");
 
-        // Загрузка изображений для сравнения
-        BufferedImage expectedImage = ImageComparisonUtil.readImageFromResources(pathToExpected);
-        BufferedImage actualImage = ImageComparisonUtil.readImageFromResources(pathToSave);
-        // Создание объекта ImageComparison и сравнение изображений
-        ImageComparisonResult imageComparisonResult = new ImageComparison(expectedImage, actualImage).compareImages();
-        // Проверка результата
-        assertEquals(ImageComparisonState.MATCH, imageComparisonResult.getImageComparisonState());
+        // 012.tif
+        pathToImage = dirOriginals + "012.tif";
+        pathToSave = dirActual + "color_012.tif";
+        pathToExpected = dirExpected + "color_012.tif";
+
+        run(pathToImage, pathToSave, pathToExpected, "testZeroMoment ~ 012");
+    }
+
+    private void runDipole(String name, String threshold) {
+        String dirActual = "src/test/resources/test_dipole/actual/";
+        String dirExpected = "src/test/resources/test_dipole/expected/";
+
+        String pathToImage = dirOriginals + name + ".tif";
+        String pathToSave = dirActual + name + "_" + threshold + ".tif";
+        String pathToExpected = dirExpected + name + "_" + threshold + ".tif";
+
+        run(pathToImage, pathToSave, pathToExpected, "testDipole ~ " + name);
     }
 
     @Test
-    void test012() {
-        String pathToImage = dirOriginals + "012.tif";
-        String pathToSave = dirActualProcessed + "color_012.tif";
-        String pathToExpected = dirExpectedProcessed + "color_012.tif";
-
-        double start = System.currentTimeMillis();
-        Main.main(new String[]{pathToImage, pathToSave});
-        double end = System.currentTimeMillis();
-        var timeSec = (end - start) / 1000;
-        LOGGER.info("test012 ~ Time: {} sec, {} min", timeSec, timeSec / 60);
-
-        // Загрузка изображений для сравнения
-        BufferedImage expectedImage = ImageComparisonUtil.readImageFromResources(pathToExpected);
-        BufferedImage actualImage = ImageComparisonUtil.readImageFromResources(pathToSave);
-        // Создание объекта ImageComparison и сравнение изображений
-        ImageComparisonResult imageComparisonResult = new ImageComparison(expectedImage, actualImage).compareImages();
-        // Проверка результата
-        assertEquals(ImageComparisonState.MATCH, imageComparisonResult.getImageComparisonState());
+    void testDipole100() {
+        String threshold = "100_000_000";
+        runDipole("cropped", threshold);
+        runDipole("012", threshold);
     }
 
     @Test
-    void test() {
-        String pathToImage = dirOriginals + "012.tif";
-        String pathToSave = "src/test/resources/for_testing/" + "012_100_000_000.tif";
-
-        double start = System.currentTimeMillis();
-        Main.main(new String[]{pathToImage, pathToSave});
-        double end = System.currentTimeMillis();
-        var timeSec = (end - start) / 1000;
-        LOGGER.info("test ~ Time: {} sec, {} min", timeSec, timeSec / 60);
+    void testDipole250() {
+        String threshold = "250_000_000";
+        runDipole("cropped", threshold);
+        runDipole("012", threshold);
     }
 }
