@@ -88,27 +88,28 @@ public class SlidingWindowProcessor {
     }
 
     private void calcSumsForDipoleMoment(int x, int y, int x1, int y1, int centerY, int[] sums) {
-        sums[0] = matrix[y][x];
-        sums[1] = matrix[y][x];
+        // sums[0] = sumX, sums[1] = sumY, sums[2] = sumX1, sums[3] = sumY1
+        sums[0] = matrix[y][x]; // sumX += яркость (y; x)
+        sums[1] = matrix[y][x]; // sumY += яркость (y; x)
         sums[2] = 0;
         sums[3] = 0;
         if (x1 != x) {
-            sums[2] += matrix[y][x1];
-            sums[1] += matrix[y][x1];
+            sums[2] += matrix[y][x1]; // sumX1 += яркость (y; x1)
+            sums[1] += matrix[y][x1]; // sumY += яркость (y; x1)
         }
         if (y1 != y) {
-            sums[0] += matrix[y1][x];
-            sums[3] += matrix[y1][x];
+            sums[0] += matrix[y1][x]; // sumX += яркость (y1; x)
+            sums[3] += matrix[y1][x]; // sumY1 += яркость (y1; x)
             if (x1 != x) {
-                sums[2] += matrix[y1][x1];
-                sums[3] += matrix[y1][x1];
+                sums[2] += matrix[y1][x1]; // sumX1 += яркость (y1; x1)
+                sums[3] += matrix[y1][x1]; // sumY1 += яркость (y1; x1)
             }
             sums[3] *= (y1 - centerY);
         }
     }
 
     // TODO: проверить всё на long и int (суммы и т.п.)
-    private void calcDipoleMomentWindow(int centerX, int centerY, int startX, int endX, int startY, int endY) {
+    private void calcDipoleMomentWindow(int centerX, int centerY, int startX, int endX, int startY, int endY, double sum) {
         double[] pXpY = new double[]{0, 0};
         int threshold = 250_000_000;
         int doubleCenterX = 2 * centerX;
@@ -128,9 +129,12 @@ public class SlidingWindowProcessor {
                 pXpY[1] += distanceY * sums[1] + sums[3];
             }
         }
-        if (Math.hypot(pXpY[0], pXpY[1]) < threshold) {
-            tiffProcessor.highlightPixel(centerY, centerX, 255);
-        }
+//        if (Math.hypot(pXpY[0], pXpY[1]) < threshold) {
+//            tiffProcessor.highlightPixel(centerY, centerX, 255);
+//        }
+        long xCenter = Math.round(pXpY[0] / sum);
+        long yCenter = Math.round(pXpY[1] / sum);
+        tiffProcessor.highlightPixel((int) yCenter + centerY, (int) xCenter + centerX, 255);
     }
 
     public void runSlidingWindow(int radius, int threshold) {
@@ -154,14 +158,14 @@ public class SlidingWindowProcessor {
             if (sum <= threshold) {
                 tiffProcessor.highlightPixel(radius, x, (255 << 16));
             } else {
-                calcDipoleMomentWindow(x, radius, startX, endX, 0, endY);
+                calcDipoleMomentWindow(x, radius, startX, endX, 0, endY, sum);
             }
             for (int y = radius + 1; y < cols - radius; y++) {
                 sum = calcNextWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y), sum);
                 if (sum <= threshold) {
                     tiffProcessor.highlightPixel(y, x, redColor);
                 } else {
-                    calcDipoleMomentWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y));
+                    calcDipoleMomentWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(matrix.length - 1, y), sum);
                 }
             }
             if (x % progress == 0) {

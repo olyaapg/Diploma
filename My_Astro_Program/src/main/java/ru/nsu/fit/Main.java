@@ -13,7 +13,7 @@ public class Main {
         String pathToImage = args[0];
         String pathToSave = args[1];
         int radius = 64; // TODO: вынести для настройки пользователем?
-        int threshold = 30_000_000; // TODO: менять при изменении радиуса окна
+        int threshold = 20_000_000; // TODO: менять при изменении радиуса окна
 
         TiffProcessor tiffProcessor = new TiffProcessor(pathToImage);
         SlidingWindowProcessor slidingWindowProcessor = new SlidingWindowProcessor(tiffProcessor);
