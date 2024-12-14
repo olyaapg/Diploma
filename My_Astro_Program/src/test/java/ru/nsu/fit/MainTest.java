@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
+import java.text.DecimalFormat;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,7 +23,7 @@ class MainTest {
         Main.main(new String[]{pathToImage, pathToSave});
         double end = System.currentTimeMillis();
         var timeSec = (end - start) / 1000;
-        LOGGER.info("{} ~ Time: {} sec, {} min", nameTest, timeSec, timeSec / 60);
+        LOGGER.info("{} ~ Time: {} sec, {} min", nameTest, timeSec, new DecimalFormat("#.###").format(timeSec / 60));
 
         // Загрузка изображений для сравнения
         BufferedImage expectedImage = ImageComparisonUtil.readImageFromResources(pathToExpected);
@@ -55,7 +56,7 @@ class MainTest {
     }
 
     private void runDipole(String name, String threshold) {
-        String dirActual = "src/test/resources/test_dipole/actual/";
+        String dirActual = "src/test/resources/test/";
         String dirExpected = "src/test/resources/test_dipole/expected/";
 
         String pathToImage = dirOriginals + name + ".tif";
@@ -66,16 +67,28 @@ class MainTest {
     }
 
     @Test
-    void testDipole100() {
-        String threshold = "100_000_000";
+    void testDipole1() {
+        String threshold = "red";
+//        runDipole("cropped", threshold);
+        runDipole("012", threshold);
+    }
+
+    @Test
+    void testDipole2() {
+        String threshold = "250_000_000";
         runDipole("cropped", threshold);
         runDipole("012", threshold);
     }
 
     @Test
-    void testDipole250() {
-        String threshold = "250_000_000";
-        runDipole("cropped", threshold);
-        runDipole("012", threshold);
+    void test() {
+        String pathToImage = dirOriginals + "cropped.tif";
+//        double start = System.currentTimeMillis();
+        Main.main(new String[]{pathToImage, ""});
+//        double end = System.currentTimeMillis();
+//        var timeSec = (end - start) / 1000;
+//        LOGGER.info("Time: {} sec, {} min", timeSec, timeSec / 60);
     }
+
+
 }
