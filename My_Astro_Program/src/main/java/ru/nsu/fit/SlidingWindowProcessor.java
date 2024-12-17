@@ -4,6 +4,8 @@ package ru.nsu.fit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+// TODO: проверить всё на double и int (суммы и т.п.)
+
 public class SlidingWindowProcessor {
     private static final Logger LOGGER = LogManager.getLogger(SlidingWindowProcessor.class);
 
@@ -46,7 +48,7 @@ public class SlidingWindowProcessor {
         return sum;
     }
 
-    private double sumUpWindow(int centerX, int startX, int endX, int endY, int radius) {
+    private double sumUpWindow(int centerX, int startX, int endX, int radius) {
         double sum = 0;
         int doubleCenterX = 2 * centerX;
         int doubleRadius = 2 * radius;
@@ -54,7 +56,7 @@ public class SlidingWindowProcessor {
         for (int x = startX; x <= endX; x++) {
             int x1 = doubleCenterX - x;
             int offsetX = x - startX;
-            for (int y = 0; y <= endY; y++) {
+            for (int y = 0; y <= radius; y++) {
                 // Проверяем, находится ли точка внутри окружности с помощью маски
                 if (mask[offsetX][y]) {
                     int y1 = doubleRadius - y;
@@ -108,13 +110,12 @@ public class SlidingWindowProcessor {
         }
     }
 
-    // TODO: проверить всё на double и int (суммы и т.п.)
     private void calcDipoleMomentWindow(int centerX, int centerY, int startX, int endX, int startY, int endY) {
         double[] pXpY = new double[]{0, 0};
         int threshold = 5_000;
         int doubleCenterX = 2 * centerX;
         int doubleCenterY = 2 * centerY;
-        double[] sums = new double[4];
+        double[] sums = new double[4];  // sums[0] = sumX, sums[1] = sumY, sums[2] = sumX1, sums[3] = sumY1
         for (int x = startX; x <= endX; x++) {
             int offsetX = x - startX;
             int x1 = doubleCenterX - x;
@@ -129,11 +130,55 @@ public class SlidingWindowProcessor {
                 pXpY[1] += distanceY * sums[1] + sums[3];
             }
         }
-        int module = (int) Math.hypot(pXpY[0], pXpY[1]);
-//        if (module < threshold) {
-//            tiffProcessor.highlightPixel(centerY, centerX, 255);
-//        }
-        tiffProcessor.highlightPixel(centerY, centerX, (((int) pXpY[0] * 10_000) << 16) | (((int) pXpY[1] * 10_000) << 8) | module);
+        double module = Math.hypot(pXpY[0], pXpY[1]);
+        if (module <= threshold) {
+            tiffProcessor.highlightPixel(centerY, centerX, 255);
+//            calcQuadrupoleMomentWindow(centerX, centerY, startX, endX, startY, endY);
+        }
+    }
+
+    private void calcQuadrupoleMoment(int x, int y, int x1, int y1, double squareX, double squareX1, int centerY, double[] arrQ) {
+        // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
+        double squareY = Math.pow((double) y - centerY, 2);
+        double squareY1;
+        arrQ[0] += normalizedMatrix[y][x] * (2 * squareX - squareY);
+        arrQ[1] += normalizedMatrix[y][x] * x * y;
+        arrQ[2] += normalizedMatrix[y][x] * (2 * squareY - squareX);
+        if (x1 != x) {
+            arrQ[0] += normalizedMatrix[y][x1] * (2 * squareX1 - squareY);
+            arrQ[1] += normalizedMatrix[y][x1] * x1 * y;
+            arrQ[2] += normalizedMatrix[y][x1] * (2 * squareY - squareX1);
+        }
+        if (y1 != y) {
+            squareY1 = Math.pow((double) y1 - centerY, 2);
+            arrQ[0] += normalizedMatrix[y1][x] * (2 * squareX - squareY1);
+            arrQ[1] += normalizedMatrix[y1][x] * x * y1;
+            arrQ[1] += normalizedMatrix[y1][x] * (2 * squareY1 - squareX);
+            if (x1 != x) {
+                arrQ[0] += normalizedMatrix[y1][x1] * (2 * squareX1 - squareY1);
+                arrQ[1] += normalizedMatrix[y1][x1] * x1 * y1;
+                arrQ[2] += normalizedMatrix[y1][x1] * (2 * squareY1 - squareX1);
+            }
+        }
+    }
+
+    private void calcQuadrupoleMomentWindow(int centerX, int centerY, int startX, int endX, int startY, int endY) {
+        double[] arrQ = new double[]{0, 0, 0}; // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
+        int doubleCenterX = 2 * centerX;
+        int doubleCenterY = 2 * centerY;
+        for (int x = startX; x <= endX; x++) {
+            int offsetX = x - startX;
+            int x1 = doubleCenterX - x;
+            double squareX = Math.pow((double) x - centerX, 2);
+            double squareX1 = Math.pow((double) x1 - centerX, 2);
+            for (int y = startY; y <= endY; y++) {
+                if (!mask[offsetX][y - startY]) continue;
+                int y1 = doubleCenterY - y;
+                calcQuadrupoleMoment(x, y, x1, y1, squareX, squareX1, centerY, arrQ);
+            }
+        }
+        tiffProcessor.highlightPixel(centerY, centerX,
+                (((int) arrQ[0] * 10_000) << 16) | (((int) arrQ[1] * 10_000) << 8) | ((int) arrQ[2] * 10_000));
     }
 
     public void runSlidingWindow(int radius, double threshold) {
@@ -148,24 +193,25 @@ public class SlidingWindowProcessor {
         LOGGER.info("Progress of the sliding window: 0%");
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
-        int endY = Math.min(normalizedMatrix.length - 1, radius);
 
         for (int x = radius; x < rows - radius; x++) {
             int startX = Math.max(0, x - radius);
             int endX = Math.min(normalizedMatrix[0].length - 1, x);
-            double sum = sumUpWindow(x, startX, endX, endY, radius);
-//            if (sum <= threshold) {
-//                tiffProcessor.highlightPixel(radius, x, (255 << 16));
-//            } else {
-                calcDipoleMomentWindow(x, radius, startX, endX, 0, endY);
-//            }
+            double sum = sumUpWindow(x, startX, endX, radius);
+            if (sum <= threshold) {
+                tiffProcessor.highlightPixel(radius, x, (255 << 16));
+            } else {
+                calcDipoleMomentWindow(x, radius, startX, endX, 0, radius);
+//            calcQuadrupoleMomentWindow(x, radius, startX, endX, 0, radius);
+            }
             for (int y = radius + 1; y < cols - radius; y++) {
                 sum = calcNextWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(normalizedMatrix.length - 1, y), sum);
-//                if (sum <= threshold) {
-//                    tiffProcessor.highlightPixel(y, x, (255 << 16));
-//                } else {
+                if (sum <= threshold) {
+                    tiffProcessor.highlightPixel(y, x, (255 << 16));
+                } else {
                     calcDipoleMomentWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(normalizedMatrix.length - 1, y));
-//                }
+//                calcQuadrupoleMomentWindow(x, y, startX, endX, Math.max(0, y - radius), Math.min(normalizedMatrix.length - 1, y));
+                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);

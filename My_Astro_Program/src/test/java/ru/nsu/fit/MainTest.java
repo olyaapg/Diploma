@@ -68,9 +68,9 @@ class MainTest {
 
     @Test
     void testDipole1() {
-        String threshold = "red";
-//        runDipole("cropped", threshold);
-        runDipole("012", threshold);
+        String threshold = "";
+        runDipole("cropped", threshold);
+//        runDipole("012", threshold);
     }
 
     @Test
@@ -81,13 +81,14 @@ class MainTest {
     }
 
     @Test
-    void test() {
-        String pathToImage = dirOriginals + "cropped.tif";
-//        double start = System.currentTimeMillis();
-        Main.main(new String[]{pathToImage, ""});
-//        double end = System.currentTimeMillis();
-//        var timeSec = (end - start) / 1000;
-//        LOGGER.info("Time: {} sec, {} min", timeSec, timeSec / 60);
+    void testQuadrupole() {
+        String pathToImage = dirOriginals + "012.tif";
+        String pathToSave = "src/test/resources/test_quadrupole/012.tif";
+        double start = System.currentTimeMillis();
+        Main.main(new String[]{pathToImage, pathToSave});
+        double end = System.currentTimeMillis();
+        var timeSec = (end - start) / 1000;
+        LOGGER.info("{} ~ Time: {} sec, {} min", "testQuadrupole", timeSec, new DecimalFormat("#.###").format(timeSec / 60));
     }
 
 
