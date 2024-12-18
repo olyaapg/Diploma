@@ -49,5 +49,4 @@ public class DipoleMomentCalculator extends MomentCalculator {
         }
         return pXpY;
     }
-
 }

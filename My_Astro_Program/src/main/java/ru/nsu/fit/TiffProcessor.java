@@ -20,7 +20,10 @@ public class TiffProcessor {
     private ImagePlus colorImage;
     private double[][] normalizedMatrix;
 
-    public TiffProcessor(String path, double percentForBrightness) {
+    private static final double PERCENT_FOR_BRIGHTNESS = 0.98;
+    private static final int APPROXIMATION = 100_000;
+
+    public TiffProcessor(String path) {
         originalImage = IJ.openImage(path);
         if (originalImage == null || originalImage.getBitDepth() != 16) {
             String exMessage = "The image was not found or is not 16-bit.";
@@ -28,28 +31,23 @@ public class TiffProcessor {
             throw new IllegalArgumentException(exMessage);
         }
         LOGGER.info("The processing of the image \"{}\" has begun", originalImage.getTitle());
-        normalizeAndSetMatrix(originalImage.getProcessor().getIntArray(), percentForBrightness);
+        normalizeAndSetMatrix(originalImage.getProcessor().getIntArray());
     }
 
-    private void normalizeAndSetMatrix(int[][] originalMatrix, double percentForBrightness) {
-        if (percentForBrightness <= 0 || percentForBrightness > 1) {
-            percentForBrightness = 0.98;
-            LOGGER.error("When normalizing the matrix, the percentage was set incorrectly! " +
-                    "It should be in [0...1]. The default value is set to {}.", percentForBrightness);
-        }
+    private void normalizeAndSetMatrix(int[][] originalMatrix) {
         int[] pixelArray = Arrays.stream(originalMatrix)
                 .flatMapToInt(Arrays::stream)
                 .toArray();
         int n = pixelArray.length;
-        int index = (int) Math.ceil(percentForBrightness * n) - 1;
+        int index = (int) Math.ceil(PERCENT_FOR_BRIGHTNESS * n) - 1;
         int maxBrightness = findKthLargest(pixelArray, index);
-        LOGGER.info("Maximum brightness for {}%: {}", percentForBrightness * 100, maxBrightness);
+        LOGGER.info("Maximum brightness for {}% of pixels: {}", PERCENT_FOR_BRIGHTNESS * 100, maxBrightness);
         int rows = originalMatrix.length;
         int cols = originalMatrix[0].length;
         normalizedMatrix = new double[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                double value = Math.round(((double) originalMatrix[i][j] / maxBrightness) * 10_000) / 10_000.0;
+                double value = Math.round(((double) originalMatrix[i][j] / maxBrightness) * APPROXIMATION) / (double) APPROXIMATION;
                 normalizedMatrix[i][j] = Math.min(value, 1.0);
             }
         }
@@ -74,7 +72,9 @@ public class TiffProcessor {
             createColorImage();
         }
         // Закрашиваем пиксель цветом
-        colorImage.getProcessor().putPixel(u, v, color);
+        var p = colorImage.getProcessor();
+        int oldColor = p.getPixel(u, v);
+        p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | color);
     }
 
     public void highlightArea(int centerX, int centerY, int radius, int color) {
@@ -104,12 +104,14 @@ public class TiffProcessor {
         ColorProcessor colorProcessor = new ColorProcessor(length, height);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < length; x++) {
-                int intensity = processor.getPixel(x, y); // Яркость пикселя
-                int normalized = (int) ((intensity / 65535.0) * 255); // Нормализация в диапазон 0-255
-                colorProcessor.putPixel(x, y, (normalized << 16) | (normalized << 8) | normalized); // Серый цвет
+                int pixelValue = processor.getPixel(x, y);
+                int scaledValue = (int) ((pixelValue / 65535.0) * 255.0);
+                int rgb = (scaledValue << 16) | (scaledValue << 8) | scaledValue;
+                colorProcessor.putPixel(x, y, rgb);
             }
         }
         colorImage = new ImagePlus("Colorized Image", colorProcessor);
+        colorImage.show();
     }
 
     public void saveColorTiff(String path) {

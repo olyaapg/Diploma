@@ -71,11 +71,11 @@ public class ZeroMomentCalculator extends MomentCalculator {
     }
 
     @Override
-    public double calculate(int centerX, int centerY, int startX, int endX, int startY, int endY) {
+    public double[] calculate(int centerX, int centerY, int startX, int endX, int startY, int endY) {
         if (endY == radius) {
-            return sumUpWindow(centerX, centerY, startX, endX, startY, endY);
+            return new double[]{sumUpWindow(centerX, centerY, startX, endX, startY, endY)};
         } else {
-            return calcNextWindow(centerX, centerY, startX, endX, startY, endY);
+            return new double[]{calcNextWindow(centerX, centerY, startX, endX, startY, endY)};
         }
     }
 }
