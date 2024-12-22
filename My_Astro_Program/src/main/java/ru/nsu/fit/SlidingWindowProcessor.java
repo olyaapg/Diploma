@@ -17,6 +17,7 @@ public class SlidingWindowProcessor {
     private boolean[][] mask;
 
     private static final int THRESHOLD_DIPOLE = 5_000;
+    private static final int THRESHOLD_QUADRUPOLE = 10_000;
 
     public SlidingWindowProcessor(TiffProcessor tiffProcessor) {
         this.tiffProcessor = tiffProcessor;
@@ -52,8 +53,8 @@ public class SlidingWindowProcessor {
         QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
         double[] pXpY;
         double sum;
-//        double[] maxPxPy = new double[]{-200000, -200000, -200000};
-//        double[] minPxPy = new double[]{200000, 200000, 200000};
+        double[] minValues = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+        double[] maxValues = new double[]{-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
 
         for (int x = radius; x < rows - radius; x++) {
             int startX = Math.max(0, x - radius);
@@ -64,35 +65,35 @@ public class SlidingWindowProcessor {
                 if (sum <= threshold) {
                     continue;
                 }
-                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                var module = Math.hypot(pXpY[0], pXpY[1]);
+                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+                getMinMaxValues(arrQ[0], arrQ[1], arrQ[2], minValues, maxValues);
+                // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
                 tiffProcessor.highlightPixel(y, x,
-                        normalizeModule(module, 164635));
+                        (normalizeComponent(arrQ[0], 6_643_855) << 16) |
+                                (normalizeComponent(arrQ[1], 1_754_260) << 8) |
+                                (normalizeComponent(arrQ[2], 7_587_695)));
 
-                //              tiffProcessor.highlightPixel(y, x,
+
+//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                var module = Math.hypot(pXpY[0], pXpY[1]);
+//                if (module < THRESHOLD_DIPOLE) {
+//                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                    getMinMaxValues(arrQ[0], arrQ[1], arrQ[2], minValues, maxValues);
+//                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
+//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
+//                    }
+//                }
+//                tiffProcessor.highlightPixel(y, x,
 //                        (normalizeComponent(pXpY[0], 164575) << 16) |
 //                                (normalizeComponent(pXpY[1], 164575) << 8) |
 //                                normalizeModule(module, 164635));
-
-
-//                    if (module < THRESHOLD_DIPOLE) {
-//                        tiffProcessor.highlightPixel(y, x, 255);
-//                        double[] qarr = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                    }
-                /// /////////////////////////////////
-//              для радиуса 64
-//                tiffProcessor.highlightPixel(y, x,
-//                        (normalizeModule(pXpY[0], -45308.55832999995, 164570.44271000006) << 16) |
-//                                (normalizeModule(pXpY[1], -68543.44171999993, 39975.604300000006) << 8) |
-//                                normalizeModule(Math.hypot(pXpY[0], pXpY[1]), 0.11906252349081849, 164630.93766066956));
-                /// /////////////////////////////////
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-//        System.out.println(minPxPy[0] + " " + minPxPy[1] + " " + minPxPy[2]);
-//        System.out.println(maxPxPy[0] + " " + maxPxPy[1] + " " + maxPxPy[2]);
+        LOGGER.info("min values: {} {} {}", minValues[0], minValues[1], minValues[2]);
+        LOGGER.info("max values: {} {} {}", maxValues[0], maxValues[1], maxValues[2]);
     }
 
     private int normalizeModule(double value, double maxValue) {

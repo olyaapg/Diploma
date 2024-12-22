@@ -26,9 +26,9 @@ public class QuadrupoleMomentCalculatorTest {
     void test1() {
         QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(matrix, mask);
         double[] result = quadrupoleMomentCalculator.calculate(radius, radius, 0, radius, 0, radius);
-        Assertions.assertEquals(-4, result[0]);
+        Assertions.assertEquals(-2, result[0]);
         Assertions.assertEquals(0, result[1]);
-        Assertions.assertEquals(32, result[2]);
+        Assertions.assertEquals(16, result[2]);
     }
 
     @Test

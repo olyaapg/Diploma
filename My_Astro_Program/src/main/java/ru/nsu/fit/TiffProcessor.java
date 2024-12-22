@@ -73,8 +73,9 @@ public class TiffProcessor {
         }
         // Закрашиваем пиксель цветом
         var p = colorImage.getProcessor();
-        int oldColor = p.getPixel(u, v);
-        p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | color);
+//        int oldColor = p.getPixel(u, v);
+//        p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | oldColor & 0xFF);
+        p.putPixel(u, v, color);
     }
 
     public void highlightArea(int centerX, int centerY, int radius, int color) {
