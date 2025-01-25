@@ -73,15 +73,6 @@ public class TiffProcessor {
         return normalizedMatrix;
     }
 
-    public int getHeight() {
-        return originalImage.getHeight();
-    }
-
-    private boolean isCircle(int centerX, int centerY, double x, double y, double squareRadius) {
-        var res = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
-        return res <= squareRadius;
-    }
-
     /**
      * Закрашивает цветом пиксель с координатами (u, v) изображения. Используется для отладочных целей.
      *
@@ -95,37 +86,7 @@ public class TiffProcessor {
         }
         // Закрашиваем пиксель цветом
         var p = colorImage.getProcessor();
-//        int oldColor = p.getPixel(u, v);
-//        p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | oldColor & 0xFF);
         p.putPixel(u, v, color);
-    }
-
-    /**
-     * Закрасить цветом область, занимаемую окном. Используется для отладочных целей.
-     *
-     * @param centerX центр области по оси Х.
-     * @param centerY центр области по оси У.
-     * @param radius  радиус окна.
-     * @param color   цвет области.
-     */
-    public void highlightArea(int centerX, int centerY, int radius, int color) {
-        if (colorImage == null) {
-            createColorImage();
-        }
-        ImageProcessor colorProcessor = colorImage.getProcessor();
-        int height = colorImage.getHeight();
-        int length = colorImage.getWidth();
-        double squareRadius = Math.pow(radius, 2);
-        // Ограничиваем прямоугольную область
-        for (int x = Math.max(0, centerX - radius); x <= Math.min(length - 1, centerX + radius); x++) {
-            for (int y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y++) {
-                // Проверяем, находится ли точка внутри окружности
-                if (isCircle(centerX, centerY, x, y, squareRadius)) {
-                    colorProcessor.putPixel(x, y, color);
-                }
-            }
-        }
-        colorProcessor.putPixel(centerX, centerY, color);
     }
 
     private void createColorImage() {

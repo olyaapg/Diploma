@@ -65,9 +65,6 @@ public class SlidingWindowProcessor {
 
         double[] pXpY;
         double sum;
-        double[] minValues = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
-        double[] maxValues = new double[]{-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
-        double maxAbsDiff = Double.MIN_VALUE;
 
         ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -80,72 +77,22 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
-//                if (sum <= threshold) {
-//                    continue;
-//                }
-                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                getMinMaxValues(arrQ[0], arrQ[1], arrQ[2], minValues, maxValues);
-                // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
-                var tmp = Math.abs(arrQ[0] + arrQ[2]);
-                if (tmp > maxAbsDiff) {
-                    maxAbsDiff = tmp;
+                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
+                if (sum <= threshold) {
+                    continue;
                 }
-                tiffProcessor.highlightPixel(y, x,
-                        normalizeComponent(arrQ[0] - 5395894, 2493058) << 16 |
-                        normalizeComponent(arrQ[1] - 94860, 2126625) << 8 |
-                        normalizeComponent(arrQ[2] - 5841953, 2113273));
-
-//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                var module = Math.hypot(pXpY[0], pXpY[1]);
-//                if (module < THRESHOLD_DIPOLE) {
-//                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                    getMinMaxValues(arrQ[0], arrQ[1], arrQ[2], minValues, maxValues);
-//                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
-//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-//                    }
-//                }
+                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+                var module = Math.hypot(pXpY[0], pXpY[1]);
+                if (module < THRESHOLD_DIPOLE) {
+                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
+                        tiffProcessor.highlightPixel(y, x, 255 << 16);
+                    }
+                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
-        }
-        LOGGER.info("min values: {} {} {}", minValues[0], minValues[1], minValues[2]);
-        LOGGER.info("max values: {} {} {}", maxValues[0], maxValues[1], maxValues[2]);
-        LOGGER.info("max Qxx - Qyy: {}", maxAbsDiff);
-    }
-
-    private int normalizeModule(double value, double maxValue) {
-        double normalized = value / maxValue;
-        normalized = Math.max(0.0, Math.min(1.0, normalized));
-        return (int) (normalized * 255);
-    }
-
-    private int normalizeComponent(double value, double maxAbsValue) {
-        // maxAbsValue - максимальное значение модуля (отрицательное и положительное) в скалярном смысле.
-        double normalized = value / maxAbsValue; // Приведение к диапазону [-1, 1]
-        normalized = Math.max(-1.0, Math.min(1.0, normalized)); // Ограничение на случай погрешностей
-        return (int) (normalized * 127 + 128); // Сдвиг в диапазон [0, 255] с фиксацией 0 в центре
-    }
-
-    private void getMinMaxValues(double firstComp, double secondComp, double thirdComp, double[] minValues, double[] maxValues) {
-        if (firstComp < minValues[0]) {
-            minValues[0] = firstComp;
-        }
-        if (secondComp < minValues[1]) {
-            minValues[1] = secondComp;
-        }
-        if (thirdComp < minValues[2]) {
-            minValues[2] = thirdComp;
-        }
-        if (firstComp > maxValues[0]) {
-            maxValues[0] = firstComp;
-        }
-        if (secondComp > maxValues[1]) {
-            maxValues[1] = secondComp;
-        }
-        if (thirdComp > maxValues[2]) {
-            maxValues[2] = thirdComp;
         }
     }
 }
