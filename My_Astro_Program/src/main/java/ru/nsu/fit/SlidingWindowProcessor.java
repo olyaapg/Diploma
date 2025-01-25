@@ -9,6 +9,11 @@ import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
 // TODO: проверить всё на double и int (суммы и т.п.)
 
+/**
+ * Класс SlidingWindowProcessor представляет собой алгоритм прохождения скользящего окна по входному изображению TIFF.
+ * Манипулирует классами-калькуляторами моментов, запуская их при необходимости в зависимости от значений предыдущих
+ * моментов в рассматриваемом окне.
+ */
 public class SlidingWindowProcessor {
     private static final Logger LOGGER = LogManager.getLogger(SlidingWindowProcessor.class);
 
@@ -19,6 +24,11 @@ public class SlidingWindowProcessor {
     private static final int THRESHOLD_DIPOLE = 5_000;
     private static final int THRESHOLD_QUADRUPOLE = 10_000;
 
+    /**
+     * Создает объект класса SlidingWindowProcessor, получая нормализованную матрицу исходного изображения.
+     *
+     * @param tiffProcessor процессор, работающий с изображениями TIFF и связанный с исходным изображением.
+     */
     public SlidingWindowProcessor(TiffProcessor tiffProcessor) {
         this.tiffProcessor = tiffProcessor;
         normalizedMatrix = tiffProcessor.getNormalizedMatrix();
@@ -36,6 +46,12 @@ public class SlidingWindowProcessor {
         }
     }
 
+    /**
+     * Запускает алгоритм скользящего окна с указанными радиусом и трешхолдом для нулевого момента (для отсеивания темноты).
+     *
+     * @param radius    радиус скользящего окна.
+     * @param threshold порог для отбрасывания ненужных темных пикселей.
+     */
     public void runSlidingWindow(int radius, double threshold) {
         if (radius == 0) {
             LOGGER.error("The radius must not be zero!");
@@ -46,33 +62,39 @@ public class SlidingWindowProcessor {
         createMask(radius);
         int progress = rows / 10; // нужно для отслеживания прогресса
         LOGGER.info("Progress of the sliding window: 0%");
-        // Перебираем центральные точки
-        // Пока что только с полным вхождением окна в границы картинки
-        ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
-        DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
-        QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+
         double[] pXpY;
         double sum;
         double[] minValues = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
         double[] maxValues = new double[]{-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
+        double maxAbsDiff = Double.MIN_VALUE;
 
+        ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
+        DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
+        QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+        // Перебираем центральные точки
+        // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
+            // пока в этом нет смысла, но оставлю на будущее, когда границы будут совпадать с границами исходного изображения
             int startX = Math.max(0, x - radius);
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
-                if (sum <= threshold) {
-                    continue;
-                }
+//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
+//                if (sum <= threshold) {
+//                    continue;
+//                }
                 double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
                 getMinMaxValues(arrQ[0], arrQ[1], arrQ[2], minValues, maxValues);
                 // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
+                var tmp = Math.abs(arrQ[0] + arrQ[2]);
+                if (tmp > maxAbsDiff) {
+                    maxAbsDiff = tmp;
+                }
                 tiffProcessor.highlightPixel(y, x,
-                        (normalizeComponent(arrQ[0], 6_643_855) << 16) |
-                                (normalizeComponent(arrQ[1], 1_754_260) << 8) |
-                                (normalizeComponent(arrQ[2], 7_587_695)));
-
+                        normalizeComponent(arrQ[0] - 5395894, 2493058) << 16 |
+                        normalizeComponent(arrQ[1] - 94860, 2126625) << 8 |
+                        normalizeComponent(arrQ[2] - 5841953, 2113273));
 
 //                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
 //                var module = Math.hypot(pXpY[0], pXpY[1]);
@@ -83,10 +105,6 @@ public class SlidingWindowProcessor {
 //                        tiffProcessor.highlightPixel(y, x, 255 << 16);
 //                    }
 //                }
-//                tiffProcessor.highlightPixel(y, x,
-//                        (normalizeComponent(pXpY[0], 164575) << 16) |
-//                                (normalizeComponent(pXpY[1], 164575) << 8) |
-//                                normalizeModule(module, 164635));
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
@@ -94,6 +112,7 @@ public class SlidingWindowProcessor {
         }
         LOGGER.info("min values: {} {} {}", minValues[0], minValues[1], minValues[2]);
         LOGGER.info("max values: {} {} {}", maxValues[0], maxValues[1], maxValues[2]);
+        LOGGER.info("max Qxx - Qyy: {}", maxAbsDiff);
     }
 
     private int normalizeModule(double value, double maxValue) {

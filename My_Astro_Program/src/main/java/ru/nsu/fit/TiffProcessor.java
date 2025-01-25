@@ -13,6 +13,10 @@ import static ru.nsu.fit.utils.QuickSelect.findKthLargest;
 
 // TODO: А можно сразу стек изображений открывать?
 
+/**
+ * TiffProcessor класс представляет собой процессор для работы с изображениями формата TIFF.
+ * Включает в себя закрашивание пикселей, открытие и сохранение файла, нормализацию значений пикселей.
+ */
 public class TiffProcessor {
     private static final Logger LOGGER = LogManager.getLogger(TiffProcessor.class);
 
@@ -23,6 +27,12 @@ public class TiffProcessor {
     private static final double PERCENT_FOR_BRIGHTNESS = 0.98;
     private static final int APPROXIMATION = 100_000;
 
+    /**
+     * Создает объект класса TiffProcessor.
+     * Проверяет корректность изображения по входному пути, нормализует матрицу пикселей исходного изображения.
+     *
+     * @param path путь до исходного изображения.
+     */
     public TiffProcessor(String path) {
         originalImage = IJ.openImage(path);
         if (originalImage == null || originalImage.getBitDepth() != 16) {
@@ -54,6 +64,11 @@ public class TiffProcessor {
         LOGGER.info("Normalization completed.");
     }
 
+    /**
+     * Возвращает нормализованную матрицу исходного изображения.
+     *
+     * @return нормализованная матрица изображения.
+     */
     public double[][] getNormalizedMatrix() {
         return normalizedMatrix;
     }
@@ -67,6 +82,13 @@ public class TiffProcessor {
         return res <= squareRadius;
     }
 
+    /**
+     * Закрашивает цветом пиксель с координатами (u, v) изображения. Используется для отладочных целей.
+     *
+     * @param u     первая координата пикселя.
+     * @param v     вторая координата пикселя.
+     * @param color цвет пикселя.
+     */
     public void highlightPixel(int u, int v, int color) {
         if (colorImage == null) {
             createColorImage();
@@ -78,6 +100,14 @@ public class TiffProcessor {
         p.putPixel(u, v, color);
     }
 
+    /**
+     * Закрасить цветом область, занимаемую окном. Используется для отладочных целей.
+     *
+     * @param centerX центр области по оси Х.
+     * @param centerY центр области по оси У.
+     * @param radius  радиус окна.
+     * @param color   цвет области.
+     */
     public void highlightArea(int centerX, int centerY, int radius, int color) {
         if (colorImage == null) {
             createColorImage();
@@ -101,11 +131,11 @@ public class TiffProcessor {
     private void createColorImage() {
         int height = originalImage.getHeight();
         int length = originalImage.getWidth();
-        ImageProcessor processor = originalImage.getProcessor();
+        ImageProcessor originalProcessor = originalImage.getProcessor();
         ColorProcessor colorProcessor = new ColorProcessor(length, height);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < length; x++) {
-                int pixelValue = processor.getPixel(x, y);
+                int pixelValue = originalProcessor.getPixel(x, y);
                 int scaledValue = (int) ((pixelValue / 65535.0) * 255.0);
                 int rgb = (scaledValue << 16) | (scaledValue << 8) | scaledValue;
                 colorProcessor.putPixel(x, y, rgb);
@@ -115,6 +145,11 @@ public class TiffProcessor {
         colorImage.show();
     }
 
+    /**
+     * Сохранить цветное изображение TIFF.
+     *
+     * @param path путь для сохранения файла.
+     */
     public void saveColorTiff(String path) {
         IJ.saveAsTiff(colorImage, path);
         LOGGER.info("The result was saved to \"{}\"", path);

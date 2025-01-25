@@ -1,10 +1,19 @@
 package ru.nsu.fit.moment_calculators;
 
+/**
+ * Класс представляет собой калькулятор подсчета нулевого момента для круглой области с центром в (x, y).
+ */
 public class ZeroMomentCalculator extends MomentCalculator {
-
     private final int radius;
     private double prevSum;
 
+    /**
+     * Создает объект класса ZeroMomentCalculator, требует необходимые для подсчета нулевого момента параметры.
+     *
+     * @param matrix нормализованная матрица изображения.
+     * @param mask   маска, представляющая собой левую верхнюю четверть окружности (окна).
+     * @param radius радиус области (окна).
+     */
     public ZeroMomentCalculator(double[][] matrix, boolean[][] mask, int radius) {
         super(matrix, mask);
         this.radius = radius;
@@ -36,6 +45,7 @@ public class ZeroMomentCalculator extends MomentCalculator {
         for (int x = startX; x <= endX; x++) {
             int x1 = doubleCenterX - x;
             int offsetX = x - startX;
+            // у всегда от 0 до radius, поскольку это первое окно ряда
             for (int y = startY; y <= endY; y++) {
                 // Проверяем, находится ли точка внутри окружности с помощью маски
                 if (mask[offsetX][y]) {

@@ -1,9 +1,17 @@
 package ru.nsu.fit.moment_calculators;
 
+/**
+ * Класс представляет собой калькулятор подсчета квадрупольного момента для круглой области с центром в (x, y).
+ */
 public class QuadrupoleMomentCalculator extends MomentCalculator {
     private double[] arrQ;
-    private int n = 0;
 
+    /**
+     * Создает объект класса QuadrupoleMomentCalculator, требует необходимые для подсчета дипольного момента параметры.
+     *
+     * @param matrix нормализованная матрица изображения.
+     * @param mask   маска, представляющая собой левую верхнюю четверть окружности (окна).
+     */
     public QuadrupoleMomentCalculator(double[][] matrix, boolean[][] mask) {
         super(matrix, mask);
     }
@@ -16,9 +24,9 @@ public class QuadrupoleMomentCalculator extends MomentCalculator {
         double coeffQxx = 2 * squareX - squareY;
         int coeffQxy = valueX * valueY;
         double coeffQyy = 2 * squareY - squareX;
-        arrQ[0] += matrix[y][x] * coeffQxx;
-        arrQ[1] += matrix[y][x] * coeffQxy;
-        arrQ[2] += matrix[y][x] * coeffQyy;
+        arrQ[0] += matrix[y][x] * coeffQxx; // Qxx += qi * (2 * Xi^2 - Yi^2)
+        arrQ[1] += matrix[y][x] * coeffQxy; // Qxy += qi * (Xi * Yi)
+        arrQ[2] += matrix[y][x] * coeffQyy; // Qyy += qi * (2 * Yi^2 - Xi^2)
         if (x != x1) {
             arrQ[0] += matrix[y][x1] * coeffQxx;
             arrQ[1] -= matrix[y][x1] * coeffQxy;
@@ -52,8 +60,8 @@ public class QuadrupoleMomentCalculator extends MomentCalculator {
                 calcQuadrupoleMoment(x, y, x1, y1, squareX, centerX, centerY);
             }
         }
-        arrQ[0] /= 2;
-        arrQ[1] = arrQ[1] * 1.5;
+        arrQ[0] /= 2; // а надо ли ещё их делить на 2?
+        arrQ[1] *= 1.5;
         arrQ[2] /= 2;
         return arrQ;
     }

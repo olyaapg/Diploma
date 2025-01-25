@@ -14,7 +14,6 @@ public class QuickSelect {
         if (low == high) {
             return nums[low];
         }
-
         int pivotIndex = partition(nums, low, high);
         if (k == pivotIndex) {
             return nums[k];
