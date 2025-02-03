@@ -70,4 +70,10 @@ class MainTest {
 //        runAndCheck("cropped.tif", "test_quadrupole", false);
         runAndCheck("012.tif", "test_quadrupole", false);
     }
+
+    @Test
+    void test() {
+        String image = "crater1.tif";
+        Main.main(new String[]{"src/test/resources/original_images/" + image, "src/test/resources/check/new_" + image, "16"});
+    }
 }

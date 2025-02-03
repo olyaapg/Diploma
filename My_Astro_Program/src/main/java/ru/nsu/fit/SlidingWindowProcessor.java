@@ -35,7 +35,7 @@ public class SlidingWindowProcessor {
     }
 
     private void createMask(int radius) {
-        double squareRadius = Math.pow(radius, 2);
+        int squareRadius = radius * radius;
         mask = new boolean[radius + 1][radius + 1];
         for (int x = 0; x <= radius; x++) {
             for (int y = 0; y <= radius; y++) {
@@ -65,6 +65,8 @@ public class SlidingWindowProcessor {
 
         double[] pXpY;
         double sum;
+        double maxValDiff = Double.MIN_VALUE;
+        double minValDiff = Double.MAX_VALUE;
 
         ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -78,21 +80,33 @@ public class SlidingWindowProcessor {
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
                 sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
-                if (sum <= threshold) {
-                    continue;
+//                if (sum <= threshold) {
+//                    continue;
+//                }
+//                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                var tmp = arrQ[0] + arrQ[2];
+                var tmp = sum;
+                if (tmp > maxValDiff) {
+                    maxValDiff = tmp;
                 }
-                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                var module = Math.hypot(pXpY[0], pXpY[1]);
-                if (module < THRESHOLD_DIPOLE) {
-                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
-                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-                    }
+                if (tmp < minValDiff) {
+                    minValDiff = tmp;
                 }
+                //tiffProcessor.highlightPixel(y, x, );
+//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                var module = Math.hypot(pXpY[0], pXpY[1]);
+//                if (module < THRESHOLD_DIPOLE) {
+//                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
+//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
+//                    }
+//                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
+        LOGGER.info("maxValDiff = {}", maxValDiff);
+        LOGGER.info("minValDiff = {}", minValDiff);
     }
 }
