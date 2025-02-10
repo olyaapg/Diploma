@@ -7,6 +7,8 @@ import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
+import static ru.nsu.fit.utils.Utils.normalizeComponent;
+
 // TODO: проверить всё на double и int (суммы и т.п.)
 
 /**
@@ -64,9 +66,8 @@ public class SlidingWindowProcessor {
         LOGGER.info("Progress of the sliding window: 0%");
 
         double[] pXpY;
-        double sum;
-        double maxValDiff = Double.MIN_VALUE;
-        double minValDiff = Double.MAX_VALUE;
+        double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
+        double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 
         ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -79,25 +80,37 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
+//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
 //                if (sum <= threshold) {
 //                    continue;
 //                }
-//                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                var tmp = arrQ[0] + arrQ[2];
-                var tmp = sum;
-                if (tmp > maxValDiff) {
-                    maxValDiff = tmp;
-                }
-                if (tmp < minValDiff) {
-                    minValDiff = tmp;
-                }
-                //tiffProcessor.highlightPixel(y, x, );
 //                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
 //                var module = Math.hypot(pXpY[0], pXpY[1]);
 //                if (module < THRESHOLD_DIPOLE) {
-//                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
+                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+                if (maxDiff[0] < arrQ[0]) {
+                    maxDiff[0] = arrQ[0];
+                }
+                if (minDiff[0] > arrQ[0]) {
+                    minDiff[0] = arrQ[0];
+                }
+                if (maxDiff[1] < arrQ[1]) {
+                    maxDiff[1] = arrQ[1];
+                }
+                if (minDiff[1] > arrQ[1]) {
+                    minDiff[1] = arrQ[1];
+                }
+                if (maxDiff[2] < arrQ[2]) {
+                    maxDiff[2] = arrQ[2];
+                }
+                if (minDiff[2] > arrQ[2]) {
+                    minDiff[2] = arrQ[2];
+                }
+                tiffProcessor.highlightPixel(y, x,
+                        normalizeComponent(arrQ[0], 496) << 16 |
+                                normalizeComponent(arrQ[1], 676) << 8 |
+                                normalizeComponent(arrQ[2], 496));
+                //                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
 //                        tiffProcessor.highlightPixel(y, x, 255 << 16);
 //                    }
 //                }
@@ -106,7 +119,8 @@ public class SlidingWindowProcessor {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-        LOGGER.info("maxValDiff = {}", maxValDiff);
-        LOGGER.info("minValDiff = {}", minValDiff);
+        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
+        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
+        LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
     }
 }

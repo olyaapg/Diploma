@@ -37,7 +37,7 @@ class MainTest {
         LOGGER.info("{} started", testName);
         double start = System.currentTimeMillis();
 
-        Main.main(new String[]{pathToImage, pathToResult});
+        Main.main(new String[]{pathToImage, pathToResult, "8"});
 
         double end = System.currentTimeMillis();
         var timeSec = (end - start) / 1000;
@@ -67,8 +67,8 @@ class MainTest {
 
     @Test
     void testQuadrupole() {
-//        runAndCheck("cropped.tif", "test_quadrupole", false);
-        runAndCheck("012.tif", "test_quadrupole", false);
+        runAndCheck("crater1.tif", "test_quadrupole", true);
+//        runAndCheck("012.tif", "test_quadrupole", false);
     }
 
     @Test

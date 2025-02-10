@@ -21,12 +21,12 @@ public class QuadrupoleMomentCalculator extends MomentCalculator {
         int valueX = x - centerX;
         int valueY =  y - centerY;
         double squareY = Math.pow(valueY, 2);
-        double coeffQxx = 2 * squareX - squareY;
-        int coeffQxy = valueX * valueY;
-        double coeffQyy = 2 * squareY - squareX;
-        arrQ[0] += matrix[y][x] * coeffQxx; // Qxx += qi * (2 * Xi^2 - Yi^2)
-        arrQ[1] += matrix[y][x] * coeffQxy; // Qxy += qi * (Xi * Yi)
-        arrQ[2] += matrix[y][x] * coeffQyy; // Qyy += qi * (2 * Yi^2 - Xi^2)
+        double coeffQxx = squareX - squareY;
+        int coeffQxy = 2 * valueX * valueY;
+        double coeffQyy = squareY - squareX;
+        arrQ[0] += matrix[y][x] * coeffQxx; // Qxx += qi * (Xi^2 - Yi^2)
+        arrQ[1] += matrix[y][x] * coeffQxy; // Qxy += qi * (2 * Xi * Yi)
+        arrQ[2] += matrix[y][x] * coeffQyy; // Qyy += qi * (Yi^2 - Xi^2)
         if (x != x1) {
             arrQ[0] += matrix[y][x1] * coeffQxx;
             arrQ[1] -= matrix[y][x1] * coeffQxy;
@@ -53,16 +53,12 @@ public class QuadrupoleMomentCalculator extends MomentCalculator {
             int offsetX = x - startX;
             int x1 = doubleCenterX - x;
             double squareX = Math.pow((double) x - centerX, 2);
-
             for (int y = startY; y <= endY; y++) {
                 if (!mask[offsetX][y - startY]) continue;
                 int y1 = doubleCenterY - y;
                 calcQuadrupoleMoment(x, y, x1, y1, squareX, centerX, centerY);
             }
         }
-        arrQ[0] /= 2; // а надо ли ещё их делить на 2?
-        arrQ[1] *= 1.5;
-        arrQ[2] /= 2;
         return arrQ;
     }
 }
