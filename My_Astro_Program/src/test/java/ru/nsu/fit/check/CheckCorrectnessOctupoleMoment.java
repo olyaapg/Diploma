@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import ru.nsu.fit.TiffProcessor;
 
 import static ru.nsu.fit.utils.Utils.normalizeComponent;
+import static ru.nsu.fit.utils.Utils.normalizeModule;
 
 class CheckCorrectnessOctupoleMoment {
     private static final int RADIUS = 8;
@@ -22,6 +23,9 @@ class CheckCorrectnessOctupoleMoment {
 
         double sumOiik = 0;
         double sumOijj = 0;
+        double sum = 0;
+
+        double norm = Double.MIN_VALUE;
 
         for (int x = RADIUS; x < rows - RADIUS; x++) {
             for (int y = RADIUS; y < cols - RADIUS; y++) {
@@ -66,22 +70,29 @@ class CheckCorrectnessOctupoleMoment {
                 if (minDiff[3] > arrQ[3]) {
                     minDiff[3] = arrQ[3];
                 }
-                sumOiik += arrQ[1];
-                sumOijj += arrQ[2];
-                tiffProcessor.highlightPixel(y, x,
-                        normalizeComponent(arrQ[0], 5136) << 16 |
-                        normalizeComponent(arrQ[1], 4166) << 8 |
-                        normalizeComponent(arrQ[2], 4224));
+                tiffProcessor.highlightPixel(y, x, (int)arrQ[3]);
+//                sumOiik += arrQ[1];
+//                sumOijj += arrQ[2];
+//                tiffProcessor.highlightPixel(y, x,
+//                        normalizeComponent(arrQ[0], 5136) << 16 |
+//                        normalizeComponent(arrQ[1], 4166) << 8 |
+//                        normalizeComponent(arrQ[2], 4224));
+//                var tmp = Math.sqrt(Math.pow(arrQ[0], 2) + Math.pow(arrQ[1], 2) + Math.pow(arrQ[2], 2) + Math.pow(arrQ[3], 2));
+//                tiffProcessor.highlightPixel(y, x, normalizeModule(tmp, 7156));
+//                if (tmp < 500) {
+//                    tiffProcessor.highlightPixel(y, x, 255 << 16);
+//                }
             }
         }
         LOGGER.info("MAX Oxxx = {}, Oxxy = {}, Oxyy = {}, Oyyy = {}", maxDiff[0], maxDiff[1], maxDiff[2], maxDiff[3]);
         LOGGER.info("MIN Oxxx = {}, Oxxy = {}, Oxyy = {}, Oyyy = {}", minDiff[0], minDiff[1], minDiff[2], minDiff[3]);
         LOGGER.info("sumOiik = {}, sumOijj = {}", sumOiik, sumOijj);
+//        LOGGER.info("max norm of octupole is {}", norm);
     }
 
     @Test
     void test() {
-        String image = "crater1.tif";
+        String image = "board.tif";
         String pathToImage = "src/test/resources/original_images/" + image;
         String pathToSave = "src/test/resources/check/new_" + image;
 
