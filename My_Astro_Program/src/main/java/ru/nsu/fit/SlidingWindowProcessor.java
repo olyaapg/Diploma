@@ -7,6 +7,9 @@ import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
+import static ru.nsu.fit.utils.Utils.normalizeComponent;
+import static ru.nsu.fit.utils.Utils.normalizeModule;
+
 // TODO: проверить всё на double и int (суммы и т.п.)
 
 /**
@@ -35,7 +38,7 @@ public class SlidingWindowProcessor {
     }
 
     private void createMask(int radius) {
-        double squareRadius = Math.pow(radius, 2);
+        int squareRadius = radius * radius;
         mask = new boolean[radius + 1][radius + 1];
         for (int x = 0; x <= radius; x++) {
             for (int y = 0; y <= radius; y++) {
@@ -64,7 +67,8 @@ public class SlidingWindowProcessor {
         LOGGER.info("Progress of the sliding window: 0%");
 
         double[] pXpY;
-        double sum;
+        double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
+        double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 
         ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -77,22 +81,58 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
-                if (sum <= threshold) {
-                    continue;
+//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
+//                if (sum <= threshold) {
+//                    continue;
+//                }
+//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                var module = Math.hypot(pXpY[0], pXpY[1]);
+//                if (module < THRESHOLD_DIPOLE) {
+                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                if (maxDiff[0] < arrQ[0]) {
+//                    maxDiff[0] = arrQ[0];
+//                }
+//                if (minDiff[0] > arrQ[0]) {
+//                    minDiff[0] = arrQ[0];
+//                }
+//                if (maxDiff[1] < arrQ[1]) {
+//                    maxDiff[1] = arrQ[1];
+//                }
+//                if (minDiff[1] > arrQ[1]) {
+//                    minDiff[1] = arrQ[1];
+//                }
+//                if (maxDiff[2] < arrQ[2]) {
+//                    maxDiff[2] = arrQ[2];
+//                }
+//                if (minDiff[2] > arrQ[2]) {
+//                    minDiff[2] = arrQ[2];
+//                }
+
+                var tmp = (arrQ[0] - arrQ[2]) / (arrQ[0] + arrQ[2]);
+                if (maxDiff[2] < tmp) {
+                    maxDiff[2] = tmp;
                 }
-                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                var module = Math.hypot(pXpY[0], pXpY[1]);
-                if (module < THRESHOLD_DIPOLE) {
-                    double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
-                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-                    }
+                if (minDiff[2] > tmp) {
+                    minDiff[2] = tmp;
                 }
+                if (tmp > -0.01 && tmp < 0.01) {
+                    tiffProcessor.highlightPixel(y, x, 255);
+                }
+//                tiffProcessor.highlightPixel(y, x,
+//                        normalizeComponent(arrQ[0], 496) << 16 |
+//                                normalizeComponent(arrQ[1], 676) << 8 |
+//                                normalizeComponent(arrQ[2], 496));
+                //                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
+//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
+//                    }
+//                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
+        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
+        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
+        LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
     }
 }

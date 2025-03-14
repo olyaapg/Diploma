@@ -1,0 +1,40 @@
+для 8
+2025-02-04 00:34:34 [main] INFO : The processing of the image "crater1.tif" has begun
+2025-02-04 00:34:34 [main] INFO : Maximum brightness for 98.0% of pixels: 40606
+2025-02-04 00:34:34 [main] INFO : Normalization completed.
+2025-02-04 00:34:34 [main] INFO : max zeroMoment = 175.86072000000007
+2025-02-04 00:34:34 [main] INFO : min zeroMoment = 87.43034999999996
+2025-02-04 00:34:42 [main] INFO : The processing of the image "crater1.tif" has begun
+2025-02-04 00:34:42 [main] INFO : Maximum brightness for 98.0% of pixels: 40606
+2025-02-04 00:34:42 [main] INFO : Normalization completed.
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 0%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 10%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 20%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 30%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 40%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 50%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 60%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 70%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 80%
+2025-02-04 00:34:42 [main] INFO : Progress of the sliding window: 90%
+2025-02-04 00:34:42 [main] INFO : maxValDiff = 175.86071999999984
+2025-02-04 00:34:42 [main] INFO : minValDiff = 87.43034999999998
+для 16
+2025-02-04 00:37:41 [main] INFO : The processing of the image "crater1.tif" has begun
+2025-02-04 00:37:41 [main] INFO : Maximum brightness for 98.0% of pixels: 40606
+2025-02-04 00:37:41 [main] INFO : Normalization completed.
+2025-02-04 00:37:41 [main] INFO : max zeroMoment = 605.3923899999995
+2025-02-04 00:37:41 [main] INFO : min zeroMoment = 423.03796
+2025-02-04 00:38:25 [main] INFO : The processing of the image "crater1.tif" has begun
+2025-02-04 00:38:25 [main] INFO : Maximum brightness for 98.0% of pixels: 40606
+2025-02-04 00:38:25 [main] INFO : Normalization completed.
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 0%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 20%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 30%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 40%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 50%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 60%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 70%
+2025-02-04 00:38:25 [main] INFO : Progress of the sliding window: 80%
+2025-02-04 00:38:25 [main] INFO : maxValDiff = 605.3923899999999
+2025-02-04 00:38:25 [main] INFO : minValDiff = 423.03796000000074
