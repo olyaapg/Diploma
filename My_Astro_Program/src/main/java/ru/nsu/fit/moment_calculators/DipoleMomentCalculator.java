@@ -3,7 +3,7 @@ package ru.nsu.fit.moment_calculators;
 /**
  * Класс представляет собой калькулятор подсчета дипольного момента для круглой области с центром в (x, y).
  */
-public class DipoleMomentCalculator extends MomentCalculator {
+public class DipoleMomentCalculator extends WindowCalculator {
     /**
      * Создает объект класса DipoleMomentCalculator, требует необходимые для подсчета дипольного момента параметры.
      *

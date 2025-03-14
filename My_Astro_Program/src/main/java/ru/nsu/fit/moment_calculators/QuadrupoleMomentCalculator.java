@@ -3,7 +3,7 @@ package ru.nsu.fit.moment_calculators;
 /**
  * Класс представляет собой калькулятор подсчета квадрупольного момента для круглой области с центром в (x, y).
  */
-public class QuadrupoleMomentCalculator extends MomentCalculator {
+public class QuadrupoleMomentCalculator extends WindowCalculator {
     private double[] arrQ;
 
     /**
@@ -17,7 +17,7 @@ public class QuadrupoleMomentCalculator extends MomentCalculator {
     }
 
     private void calcQuadrupoleMoment(int x, int y, int x1, int y1, double squareX, int centerX, int centerY) {
-        // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy
+        // arrQ[0] = Qxx, arrQ[1] = Qxy, arrQ[2] = Qyy, arrQ[3] = Qzz
         int valueX = x - centerX;
         int valueY = y - centerY;
         double squareY = Math.pow(valueY, 2);

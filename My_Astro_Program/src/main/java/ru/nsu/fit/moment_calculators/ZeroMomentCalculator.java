@@ -3,7 +3,7 @@ package ru.nsu.fit.moment_calculators;
 /**
  * Класс представляет собой калькулятор подсчета нулевого момента для круглой области с центром в (x, y).
  */
-public class ZeroMomentCalculator extends MomentCalculator {
+public class ZeroMomentCalculator extends WindowCalculator {
     private final int radius;
     private double prevSum;
 

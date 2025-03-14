@@ -1,10 +1,10 @@
 package ru.nsu.fit.moment_calculators;
 
-public abstract class MomentCalculator {
+public abstract class WindowCalculator {
     protected double[][] matrix;
     protected boolean[][] mask;
 
-    protected MomentCalculator(double[][] matrix, boolean[][] mask) {
+    protected WindowCalculator(double[][] matrix, boolean[][] mask) {
         this.matrix = matrix;
         this.mask = mask;
     }
