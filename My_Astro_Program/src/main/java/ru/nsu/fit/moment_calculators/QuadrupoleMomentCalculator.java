@@ -6,6 +6,8 @@ package ru.nsu.fit.moment_calculators;
 public class QuadrupoleMomentCalculator extends WindowCalculator {
     private double[] arrQ;
 
+    private double avgVal;
+
     /**
      * Создает объект класса QuadrupoleMomentCalculator, требует необходимые для подсчета дипольного момента параметры.
      *
@@ -14,6 +16,10 @@ public class QuadrupoleMomentCalculator extends WindowCalculator {
      */
     public QuadrupoleMomentCalculator(double[][] matrix, boolean[][] mask) {
         super(matrix, mask);
+    }
+
+    public void setAvgVal(double val) {
+        this.avgVal = val;
     }
 
     private void calcQuadrupoleMoment(int x, int y, int x1, int y1, double squareX, int centerX, int centerY) {
@@ -25,26 +31,30 @@ public class QuadrupoleMomentCalculator extends WindowCalculator {
         int coeffQxy = 3 * valueX * valueY;
         double coeffQyy = 2 * squareY - squareX;
         double coeffQzz = -squareX - squareY;
-        arrQ[0] += matrix[y][x] * coeffQxx; // Qxx += qi * (2 * Xi^2 - Yi^2)
-        arrQ[1] += matrix[y][x] * coeffQxy; // Qxy += qi * (3 * Xi * Yi)
-        arrQ[2] += matrix[y][x] * coeffQyy; // Qyy += qi * (2 * Yi^2 - Xi^2)
-        arrQ[3] += matrix[y][x] * coeffQzz; // Qzz += qi * (-Xi^2 - Yi^2)
+        double qi = matrix[y][x] - avgVal;
+        arrQ[0] += qi * coeffQxx; // Qxx += qi * (2 * Xi^2 - Yi^2)
+        arrQ[1] += qi * coeffQxy; // Qxy += qi * (3 * Xi * Yi)
+        arrQ[2] += qi * coeffQyy; // Qyy += qi * (2 * Yi^2 - Xi^2)
+        arrQ[3] += qi * coeffQzz; // Qzz += qi * (-Xi^2 - Yi^2)
         if (x != x1) {
-            arrQ[0] += matrix[y][x1] * coeffQxx;
-            arrQ[1] -= matrix[y][x1] * coeffQxy;
-            arrQ[2] += matrix[y][x1] * coeffQyy;
-            arrQ[3] += matrix[y][x1] * coeffQzz;
+            qi = matrix[y][x1] - avgVal;
+            arrQ[0] += qi * coeffQxx;
+            arrQ[1] -= qi * coeffQxy;
+            arrQ[2] += qi * coeffQyy;
+            arrQ[3] += qi * coeffQzz;
         }
         if (y != y1) {
-            arrQ[0] += matrix[y1][x] * coeffQxx;
-            arrQ[1] -= matrix[y1][x] * coeffQxy;
-            arrQ[2] += matrix[y1][x] * coeffQyy;
-            arrQ[3] += matrix[y1][x] * coeffQzz;
+            qi = matrix[y1][x] - avgVal;
+            arrQ[0] += qi * coeffQxx;
+            arrQ[1] -= qi * coeffQxy;
+            arrQ[2] += qi * coeffQyy;
+            arrQ[3] += qi * coeffQzz;
             if (x != x1) {
-                arrQ[0] += matrix[y1][x1] * coeffQxx;
-                arrQ[1] += matrix[y1][x1] * coeffQxy;
-                arrQ[2] += matrix[y1][x1] * coeffQyy;
-                arrQ[3] += matrix[y1][x1] * coeffQzz;
+                qi = matrix[y1][x1] - avgVal;
+                arrQ[0] += qi * coeffQxx;
+                arrQ[1] += qi * coeffQxy;
+                arrQ[2] += qi * coeffQyy;
+                arrQ[3] += qi * coeffQzz;
             }
         }
     }

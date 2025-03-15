@@ -70,9 +70,11 @@ public class SlidingWindowProcessor {
         double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
         double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 
-        ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
-        DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
-        QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+        ZeroMomentCalculator zmc = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
+        DipoleMomentCalculator dmc = new DipoleMomentCalculator(normalizedMatrix, mask);
+        QuadrupoleMomentCalculator qmc = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+
+        AverageValueCalculator avc = new AverageValueCalculator(normalizedMatrix, mask);
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
@@ -81,14 +83,16 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
+//                sum = zmc.calculate(x, y, startX, endX, startY, y)[0];
 //                if (sum <= threshold) {
 //                    continue;
 //                }
-//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+//                pXpY = dmc.calculate(x, y, startX, endX, startY, y);
 //                var module = Math.hypot(pXpY[0], pXpY[1]);
 //                if (module < THRESHOLD_DIPOLE) {
-                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
+                double avgVal = avc.calculate(x, y, startX, endX, startY, y)[0];
+                qmc.setAvgVal(avgVal);
+                double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
 //                if (maxDiff[0] < arrQ[0]) {
 //                    maxDiff[0] = arrQ[0];
 //                }

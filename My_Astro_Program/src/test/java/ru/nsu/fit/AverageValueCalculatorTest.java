@@ -46,11 +46,11 @@ class AverageValueCalculatorTest {
     @Test
     void test3() {
         double[][] matrix = {
-                {1, 0, 5, 0, 1},
-                {0, 8, 10, 8, 0},
+                {1, -10, 5, -10, 1},
+                {-10, 8, 10, 8, -10},
                 {2, 5, 10, 7, 5},
-                {0, 4, 7, 4, 0},
-                {1, 0, 3, 0, 1}
+                {-10, 4, 7, 4, -10},
+                {1, -10, 3, -10, 1}
         };
         AverageValueCalculator avc = new AverageValueCalculator(matrix, createMask(2));
         Assertions.assertEquals(6, avc.calculate(2, 2, 0, 2, 0, 2)[0]);
