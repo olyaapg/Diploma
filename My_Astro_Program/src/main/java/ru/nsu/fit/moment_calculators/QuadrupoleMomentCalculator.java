@@ -6,8 +6,6 @@ package ru.nsu.fit.moment_calculators;
 public class QuadrupoleMomentCalculator extends WindowCalculator {
     private double[] arrQ;
 
-    private double avgVal;
-
     /**
      * Создает объект класса QuadrupoleMomentCalculator, требует необходимые для подсчета дипольного момента параметры.
      *
@@ -16,10 +14,6 @@ public class QuadrupoleMomentCalculator extends WindowCalculator {
      */
     public QuadrupoleMomentCalculator(double[][] matrix, boolean[][] mask) {
         super(matrix, mask);
-    }
-
-    public void setAvgVal(double val) {
-        this.avgVal = val;
     }
 
     private void calcQuadrupoleMoment(int x, int y, int x1, int y1, double squareX, int centerX, int centerY) {

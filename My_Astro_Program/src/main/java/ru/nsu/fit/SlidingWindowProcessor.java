@@ -24,8 +24,7 @@ public class SlidingWindowProcessor {
     private final double[][] normalizedMatrix;
     private boolean[][] mask;
 
-    private static final int THRESHOLD_DIPOLE = 5_000;
-    private static final int THRESHOLD_QUADRUPOLE = 10_000;
+    private static final int THRESHOLD_DIPOLE = 10000;
 
     /**
      * Создает объект класса SlidingWindowProcessor, получая нормализованную матрицу исходного изображения.
@@ -87,12 +86,39 @@ public class SlidingWindowProcessor {
 //                if (sum <= threshold) {
 //                    continue;
 //                }
-//                pXpY = dmc.calculate(x, y, startX, endX, startY, y);
-//                var module = Math.hypot(pXpY[0], pXpY[1]);
-//                if (module < THRESHOLD_DIPOLE) {
                 double avgVal = avc.calculate(x, y, startX, endX, startY, y)[0];
-                qmc.setAvgVal(avgVal);
-                double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
+
+                dmc.setAvgVal(avgVal);
+                pXpY = dmc.calculate(x, y, startX, endX, startY, y);
+
+                var module = Math.hypot(pXpY[0], pXpY[1]);
+
+                if (module < THRESHOLD_DIPOLE) {
+                    qmc.setAvgVal(avgVal);
+                    double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
+
+                    double theta = 0.5 * Math.atan2(-2 * arrQ[1], arrQ[2] - arrQ[0]);
+                    double cos = Math.cos(theta);
+                    double sin = Math.sin(theta);
+                    double squareCos = Math.pow(cos, 2);
+                    double squareSin = Math.pow(sin, 2);
+
+                    double[] arrQRotated = new double[3];
+                    arrQRotated[0] = arrQ[0] * squareCos + 2 * arrQ[1] * sin * cos + arrQ[2] * squareSin;
+                    arrQRotated[1] = (arrQ[2] - arrQ[0]) * sin * cos + arrQ[1] * (squareCos - squareSin);
+                    arrQRotated[2] = arrQ[0] * squareSin - 2 * arrQ[1] * sin * cos + arrQ[2] * squareCos;
+
+                    var tmp = (arrQRotated[0] - arrQRotated[2]) / (arrQRotated[0] + arrQRotated[2]);
+                    tmp = Math.abs(tmp);
+                    if (maxDiff[2] < tmp) {
+                        maxDiff[2] = tmp;
+                    }
+                    if (minDiff[2] > tmp) {
+                        minDiff[2] = tmp;
+                    }
+                    if (tmp < 0.5) {
+                        tiffProcessor.highlightPixel(y, x, 255 << 16);
+                    }
 //                if (maxDiff[0] < arrQ[0]) {
 //                    maxDiff[0] = arrQ[0];
 //                }
@@ -111,32 +137,14 @@ public class SlidingWindowProcessor {
 //                if (minDiff[2] > arrQ[2]) {
 //                    minDiff[2] = arrQ[2];
 //                }
-
-                var tmp = (arrQ[0] - arrQ[2]) / (arrQ[0] + arrQ[2]);
-                if (maxDiff[2] < tmp) {
-                    maxDiff[2] = tmp;
                 }
-                if (minDiff[2] > tmp) {
-                    minDiff[2] = tmp;
-                }
-                if (tmp > -0.01 && tmp < 0.01) {
-                    tiffProcessor.highlightPixel(y, x, 255);
-                }
-//                tiffProcessor.highlightPixel(y, x,
-//                        normalizeComponent(arrQ[0], 496) << 16 |
-//                                normalizeComponent(arrQ[1], 676) << 8 |
-//                                normalizeComponent(arrQ[2], 496));
-                //                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
-//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-//                    }
-//                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
-        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
+//        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
+//        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
         LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
     }
 }
