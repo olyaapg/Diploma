@@ -68,9 +68,9 @@ class MainTest {
 
     @Test
     void testQuadrupole() {
-        runAndCheck("crater2.tif", "test_quadrupole", true);
+//        runAndCheck("crater2.tif", "test_quadrupole", true);
 //        runAndCheck("012.tif", "test_quadrupole", false);
-//        runAndCheck("board.tif", "test_quadrupole", false);
+        runAndCheck("board.tif", "test_quadrupole", false);
 //        runAndCheck("test_circle_16bit.tif", "test_quadrupole", false);
 //        runAndCheck("circle2.tif", "test_quadrupole", false);
     }

@@ -115,4 +115,23 @@ public class TiffProcessor {
         IJ.saveAsTiff(colorImage, path);
         LOGGER.info("The result was saved to \"{}\"", path);
     }
+
+    public void highlightArea(int centerX, int centerY, int radius, int color) {
+        if (colorImage == null) {
+            createColorImage();
+        }
+        ImageProcessor colorProcessor = colorImage.getProcessor();
+        int height = colorImage.getHeight();
+        int length = colorImage.getWidth();
+        double squareRadius = Math.pow(radius, 2);
+        for (int x = Math.max(0, centerX - radius); x <= Math.min(length - 1, centerX + radius); x++) {
+            for (int y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y++) {
+                var res = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
+                if (res <= squareRadius && squareRadius - 300 <= res) {
+                    colorProcessor.putPixel(x, y, color);
+                }
+            }
+        }
+        colorProcessor.putPixel(centerX, centerY, color);
+    }
 }

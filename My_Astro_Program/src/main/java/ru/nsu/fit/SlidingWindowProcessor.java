@@ -82,10 +82,10 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-//                sum = zmc.calculate(x, y, startX, endX, startY, y)[0];
-//                if (sum <= threshold) {
-//                    continue;
-//                }
+                double sum = zmc.calculate(x, y, startX, endX, startY, y)[0];
+                if (sum <= threshold) {
+                    continue;
+                }
                 double avgVal = avc.calculate(x, y, startX, endX, startY, y)[0];
 
                 dmc.setAvgVal(avgVal);
@@ -116,7 +116,8 @@ public class SlidingWindowProcessor {
                     if (minDiff[2] > tmp) {
                         minDiff[2] = tmp;
                     }
-                    if (tmp < 0.5) {
+                    if (tmp < 0.1) {
+                        tiffProcessor.highlightArea(y, x, radius, 255 << 16 | 255 << 8 | 150);
                         tiffProcessor.highlightPixel(y, x, 255 << 16);
                     }
 //                if (maxDiff[0] < arrQ[0]) {
