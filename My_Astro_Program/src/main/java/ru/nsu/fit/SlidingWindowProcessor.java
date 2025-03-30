@@ -7,10 +7,9 @@ import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
-import static ru.nsu.fit.utils.Utils.normalizeComponent;
-import static ru.nsu.fit.utils.Utils.normalizeModule;
+import java.util.HashSet;
+import java.util.Set;
 
-// TODO: проверить всё на double и int (суммы и т.п.)
 
 /**
  * Класс SlidingWindowProcessor представляет собой алгоритм прохождения скользящего окна по входному изображению TIFF.
@@ -24,6 +23,7 @@ public class SlidingWindowProcessor {
     private final double[][] normalizedMatrix;
     private boolean[][] mask;
 
+    private static final int THRESHOLD_FOR_ZERO_MOMENT = 2_000;
     private static final int THRESHOLD_DIPOLE = 10000;
 
     /**
@@ -52,7 +52,7 @@ public class SlidingWindowProcessor {
      * Запускает алгоритм скользящего окна с указанными радиусом и трешхолдом для нулевого момента (для отсеивания темноты).
      *
      * @param radius    радиус скользящего окна.
-     * @param threshold порог для отбрасывания ненужных темных пикселей.
+     * @param threshold стартовый порог для нахождения ключевых точек: (x^2-y^2)/(x^2+y^2) < threshold.
      */
     public void runSlidingWindow(int radius, double threshold) {
         if (radius == 0) {
@@ -68,6 +68,7 @@ public class SlidingWindowProcessor {
         double[] pXpY;
         double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
         double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+        Set<Integer> degrees = new HashSet<>();
 
         ZeroMomentCalculator zmc = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dmc = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -83,7 +84,7 @@ public class SlidingWindowProcessor {
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
                 double sum = zmc.calculate(x, y, startX, endX, startY, y)[0];
-                if (sum <= threshold) {
+                if (sum <= THRESHOLD_FOR_ZERO_MOMENT) {
                     continue;
                 }
                 double avgVal = avc.calculate(x, y, startX, endX, startY, y)[0];
@@ -98,8 +99,10 @@ public class SlidingWindowProcessor {
                     double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
 
                     double theta = 0.5 * Math.atan2(-2 * arrQ[1], arrQ[2] - arrQ[0]);
+                    degrees.add((int) Math.round(theta * 57.2958));
                     double cos = Math.cos(theta);
                     double sin = Math.sin(theta);
+                    theta = (int) Math.round(theta * 57.2958);
                     double squareCos = Math.pow(cos, 2);
                     double squareSin = Math.pow(sin, 2);
 
@@ -116,9 +119,10 @@ public class SlidingWindowProcessor {
                     if (minDiff[2] > tmp) {
                         minDiff[2] = tmp;
                     }
-                    if (tmp < 0.1) {
+                    if (tmp < threshold) {
                         tiffProcessor.highlightArea(y, x, radius, 255 << 16 | 255 << 8 | 150);
                         tiffProcessor.highlightPixel(y, x, 255 << 16);
+                        LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
                     }
 //                if (maxDiff[0] < arrQ[0]) {
 //                    maxDiff[0] = arrQ[0];
@@ -147,5 +151,10 @@ public class SlidingWindowProcessor {
 //        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
 //        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
         LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
+        StringBuilder sb = new StringBuilder();
+        for (Object i : degrees.toArray()) {
+            sb.append(i).append(" ");
+        }
+        LOGGER.info("Значения градусов, которые встречались: {}", sb);
     }
 }

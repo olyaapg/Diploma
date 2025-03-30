@@ -127,7 +127,7 @@ public class TiffProcessor {
         for (int x = Math.max(0, centerX - radius); x <= Math.min(length - 1, centerX + radius); x++) {
             for (int y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y++) {
                 var res = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
-                if (res <= squareRadius && squareRadius - 300 <= res) {
+                if (res <= squareRadius && squareRadius - 100 <= res) {
                     colorProcessor.putPixel(x, y, color);
                 }
             }
