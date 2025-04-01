@@ -7,7 +7,9 @@ import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -75,6 +77,8 @@ public class SlidingWindowProcessor {
         QuadrupoleMomentCalculator qmc = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
 
         AverageValueCalculator avc = new AverageValueCalculator(normalizedMatrix, mask);
+        ConnectedComponents cc = new ConnectedComponents(3);
+        List<Point> points = new ArrayList<>();
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
@@ -123,6 +127,7 @@ public class SlidingWindowProcessor {
                         tiffProcessor.highlightArea(y, x, radius, 255 << 16 | 255 << 8 | 150);
                         tiffProcessor.highlightPixel(y, x, 255 << 16);
                         LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
+                        points.add(new Point(x, y));
                     }
 //                if (maxDiff[0] < arrQ[0]) {
 //                    maxDiff[0] = arrQ[0];
@@ -156,5 +161,15 @@ public class SlidingWindowProcessor {
             sb.append(i).append(" ");
         }
         LOGGER.info("Значения градусов, которые встречались: {}", sb);
+
+
+        List<Set<Point>> puddles = cc.findConnectedComponents(points);
+        for (Set<Point> set : puddles) {
+            System.out.println("THE SET");
+            for (Point point : set) {
+                System.out.print("(" + point.x() + ";" + point.y() + "), ");
+            }
+            System.out.println();
+        }
     }
 }
