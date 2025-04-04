@@ -1,12 +1,21 @@
 package ru.nsu.fit;
 
-public record Point(int x, int y) {
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Point other)) return false;
-        return this.x == other.x && this.y == other.y;
+public class Point {
+    private final int x;
+    private final int y;
+
+    public Point(int x, int y){
+        this.x = x;
+        this.y = y;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
 }
+

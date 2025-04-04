@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -101,11 +102,5 @@ class MainTest {
 //        runAndCheck("test_circle_16bit.tif", "test_quadrupole", false);
 //        runMain("rotated_45_crater2.tif", "test_quadrupole", 49, 0.5);
         runMain("two_circles.tif", "test_quadrupole", 90, 50.0);
-    }
-
-    @Test
-    void test() {
-        String image = "crater1.tif";
-        Main.main(new String[]{"src/test/resources/original_images/" + image, "src/test/resources/check/new_" + image, "16"});
     }
 }

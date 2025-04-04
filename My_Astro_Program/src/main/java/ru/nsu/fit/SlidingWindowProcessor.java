@@ -7,10 +7,7 @@ import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
 import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -77,8 +74,7 @@ public class SlidingWindowProcessor {
         QuadrupoleMomentCalculator qmc = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
 
         AverageValueCalculator avc = new AverageValueCalculator(normalizedMatrix, mask);
-        ConnectedComponents cc = new ConnectedComponents(3);
-        List<Point> points = new ArrayList<>();
+        List<KeyPoint> points = new ArrayList<>();
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
@@ -127,34 +123,14 @@ public class SlidingWindowProcessor {
                         tiffProcessor.highlightArea(y, x, radius, 255 << 16 | 255 << 8 | 150);
                         tiffProcessor.highlightPixel(y, x, 255 << 16);
                         LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
-                        points.add(new Point(x, y));
+                        points.add(new KeyPoint(x, y, tmp, theta));
                     }
-//                if (maxDiff[0] < arrQ[0]) {
-//                    maxDiff[0] = arrQ[0];
-//                }
-//                if (minDiff[0] > arrQ[0]) {
-//                    minDiff[0] = arrQ[0];
-//                }
-//                if (maxDiff[1] < arrQ[1]) {
-//                    maxDiff[1] = arrQ[1];
-//                }
-//                if (minDiff[1] > arrQ[1]) {
-//                    minDiff[1] = arrQ[1];
-//                }
-//                if (maxDiff[2] < arrQ[2]) {
-//                    maxDiff[2] = arrQ[2];
-//                }
-//                if (minDiff[2] > arrQ[2]) {
-//                    minDiff[2] = arrQ[2];
-//                }
                 }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-//        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
-//        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
         LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
         StringBuilder sb = new StringBuilder();
         for (Object i : degrees.toArray()) {
@@ -162,14 +138,12 @@ public class SlidingWindowProcessor {
         }
         LOGGER.info("Значения градусов, которые встречались: {}", sb);
 
-
-        List<Set<Point>> puddles = cc.findConnectedComponents(points);
-        for (Set<Point> set : puddles) {
-            System.out.println("THE SET");
-            for (Point point : set) {
-                System.out.print("(" + point.x() + ";" + point.y() + "), ");
-            }
-            System.out.println();
+        KeyPointsProcessor pointsProcessor = new KeyPointsProcessor(3);
+        List<KeyPoint> resultKeyPoints = new ArrayList<>();
+        pointsProcessor.findKeyPoints(points, resultKeyPoints);
+        for (KeyPoint keyPoint : resultKeyPoints) {
+            LOGGER.info("Key point: ({}; {}) ~ {} ~ {}°",
+                    keyPoint.getX(), keyPoint.getY(), keyPoint.getTmp(), keyPoint.getTheta());
         }
     }
 }

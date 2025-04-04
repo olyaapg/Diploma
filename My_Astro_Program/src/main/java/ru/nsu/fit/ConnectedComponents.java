@@ -1,35 +1,32 @@
 package ru.nsu.fit;
 
-import java.util.Set;
-import java.util.Deque;
-import java.util.ArrayDeque;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
-public class ConnectedComponents {
+
+public class ConnectedComponents<T extends KeyPoint> {
     private final int squaredDistance;
 
     public ConnectedComponents(int distance) {
         this.squaredDistance = distance * distance;
     }
 
-    private double getDistanceSquared(Point a, Point b) {
-        return Math.pow((double) a.x() - b.x(), 2) + Math.pow((double) a.y() - b.y(), 2);
+    private int getDistanceSquared(T a, T b) {
+        int dx = a.getX() - b.getX();
+        int dy = a.getY() - b.getY();
+        return dx * dx + dy * dy;
     }
 
-    private void exploreComponent(Point start, Set<Point> component, Set<Point> notVisited) {
-        Deque<Point> stack = new ArrayDeque<>();
+    private void exploreComponent(T start, List<T> component, Set<T> notVisited) {
+        Deque<T> stack = new ArrayDeque<>();
         stack.push(start);
         notVisited.remove(start);
 
         while (!stack.isEmpty()) {
-            Point current = stack.pop();
+            T current = stack.pop();
             component.add(current);
-            Iterator<Point> iterator = notVisited.iterator();
+            Iterator<T> iterator = notVisited.iterator();
             while (iterator.hasNext()) {
-                Point neighbor = iterator.next();
+                T neighbor = iterator.next();
                 if (getDistanceSquared(current, neighbor) <= squaredDistance) {
                     iterator.remove();
                     stack.push(neighbor);
@@ -38,13 +35,13 @@ public class ConnectedComponents {
         }
     }
 
-    public List<Set<Point>> findConnectedComponents(List<Point> points) {
-        List<Set<Point>> components = new ArrayList<>();
-        Set<Point> notVisited = new HashSet<>(points); // непотокобезопасно, нужен ConcurrentHashMap
+    public List<List<T>> findConnectedComponents(List<T> points) {
+        List<List<T>> components = new ArrayList<>();
+        Set<T> notVisited = new HashSet<>(points);
 
-        for (Point currPoint : points) {
+        for (T currPoint : points) {
             if (notVisited.contains(currPoint)) {
-                Set<Point> component = new HashSet<>();
+                List<T> component = new ArrayList<>();
                 exploreComponent(currPoint, component, notVisited);
                 components.add(component);
             }
