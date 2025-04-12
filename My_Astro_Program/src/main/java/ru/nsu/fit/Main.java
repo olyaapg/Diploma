@@ -5,11 +5,41 @@ package ru.nsu.fit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
     private static int radius = 64;
-    private static double threshold = 0.5;
+    private static double threshold = 1;
+    private static final int distance = 3;
+
+    private static void findKeyPointsFromPuddles(List<KeyPoint> points, TiffProcessor tiffProcessor) {
+        KeyPointsProcessor pointsProcessor = new KeyPointsProcessor(distance);
+        List<KeyPoint> resultKeyPoints = new ArrayList<>();
+        pointsProcessor.findKeyPoints(points, resultKeyPoints);
+        for (KeyPoint keyPoint : resultKeyPoints) {
+//            tiffProcessor.highlightArea(keyPoint.getY(), keyPoint.getX(), radius,
+//                    255 << 16 | 255 << 8 | 150);
+            tiffProcessor.highlightPixel(keyPoint.getY(), keyPoint.getX(),
+                    255 << 16 | 255 << 8);
+        }
+        LOGGER.info("Всего найдено точек: {}", resultKeyPoints.size());
+    }
+
+    private static void saveIntermediateFile(TiffProcessor tiffProcessor, String pathToImage) {
+        String[] tokens = pathToImage.split("/");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss");
+        String pathToSave = "src/test/resources/a-tmp/"
+                + LocalDateTime.now().format(formatter)
+                + "_" + tokens[tokens.length - 1];
+        tiffProcessor.highlightArea(radius, radius, radius, 255 << 16);
+        tiffProcessor.saveColorTiff(pathToSave);
+    }
+
 
     /**
      * Запуск программы.
@@ -32,10 +62,12 @@ public class Main {
         if (args.length > 3) {
             threshold = Double.parseDouble(args[3]);
         }
-
         TiffProcessor tiffProcessor = new TiffProcessor(pathToImage);
         SlidingWindowProcessor slidingWindowProcessor = new SlidingWindowProcessor(tiffProcessor);
-        slidingWindowProcessor.runSlidingWindow(radius, threshold);
+        List<KeyPoint> points = slidingWindowProcessor.runSlidingWindow(radius, threshold);
+
+        saveIntermediateFile(tiffProcessor, pathToImage);
+        findKeyPointsFromPuddles(points, tiffProcessor);
 
         tiffProcessor.saveColorTiff(pathToSave);
     }

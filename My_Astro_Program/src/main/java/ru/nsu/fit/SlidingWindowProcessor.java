@@ -52,11 +52,12 @@ public class SlidingWindowProcessor {
      *
      * @param radius    радиус скользящего окна.
      * @param threshold стартовый порог для нахождения ключевых точек: (x^2-y^2)/(x^2+y^2) < threshold.
+     * @return список точек, входящих в найденные лужи
      */
-    public void runSlidingWindow(int radius, double threshold) {
+    public List<KeyPoint> runSlidingWindow(int radius, double threshold) {
         if (radius == 0) {
             LOGGER.error("The radius must not be zero!");
-            return;
+            return Collections.emptyList();
         }
         int rows = normalizedMatrix[0].length; // 2822
         int cols = normalizedMatrix.length; // 4144
@@ -120,9 +121,8 @@ public class SlidingWindowProcessor {
                         minDiff[2] = tmp;
                     }
                     if (tmp < threshold) {
-                        tiffProcessor.highlightArea(y, x, radius, 255 << 16 | 255 << 8 | 150);
-                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-                        LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
+                        tiffProcessor.highlightPixelWithSpecificColor(y, x, 'B');
+//                        LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
                         points.add(new KeyPoint(x, y, tmp, theta));
                     }
                 }
@@ -131,19 +131,12 @@ public class SlidingWindowProcessor {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-        LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
+        LOGGER.info("max tmp = {}, min tmp = {}", maxDiff[2], minDiff[2]);
         StringBuilder sb = new StringBuilder();
         for (Object i : degrees.toArray()) {
             sb.append(i).append(" ");
         }
         LOGGER.info("Значения градусов, которые встречались: {}", sb);
-
-        KeyPointsProcessor pointsProcessor = new KeyPointsProcessor(3);
-        List<KeyPoint> resultKeyPoints = new ArrayList<>();
-        pointsProcessor.findKeyPoints(points, resultKeyPoints);
-        for (KeyPoint keyPoint : resultKeyPoints) {
-            LOGGER.info("Key point: ({}; {}) ~ {} ~ {}°",
-                    keyPoint.getX(), keyPoint.getY(), keyPoint.getTmp(), keyPoint.getTheta());
-        }
+        return points;
     }
 }

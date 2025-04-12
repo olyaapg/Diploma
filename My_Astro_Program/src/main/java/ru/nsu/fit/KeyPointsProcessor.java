@@ -9,24 +9,25 @@ public class KeyPointsProcessor {
         cc = new ConnectedComponents<>(distance);
     }
 
-    private void processPuddle(List<KeyPoint> puddle, List<KeyPoint> resultKeyPoints) {
-        if (puddle.size() <= 4) {
-            resultKeyPoints.add(puddle.get(puddle.size() - 1));
-            return;
-        }
-
-        int size = puddle.size();
-        int n = size % 4 == 0 ? size / 4 : size / 4 + 1;
-        List<KeyPoint> croppedPuddle = new ArrayList<>(puddle.subList(size - n, size));
-        findKeyPoints(croppedPuddle, resultKeyPoints);
-    }
-
     public void findKeyPoints(List<KeyPoint> points, List<KeyPoint> resultKeyPoints) {
-        List<List<KeyPoint>> puddles = cc.findConnectedComponents(points);
+        Queue<List<KeyPoint>> puddleQueue = new LinkedList<>(cc.findConnectedComponents(points));
 
-        for (List<KeyPoint> puddle : puddles) {
+        while (!puddleQueue.isEmpty()) {
+            List<KeyPoint> puddle = puddleQueue.poll();
             Collections.sort(puddle);
-            processPuddle(puddle, resultKeyPoints);
+
+            if (puddle.size() <= 4) {
+                KeyPoint keyPoint = puddle.get(0);
+                resultKeyPoints.add(keyPoint);
+                continue;
+            }
+
+            int size = puddle.size();
+            int n = (size + 3) / 4;
+            List<KeyPoint> cropped = new ArrayList<>(puddle.subList(0, n));
+
+            List<List<KeyPoint>> newPuddles = cc.findConnectedComponents(cropped);
+            puddleQueue.addAll(newPuddles);
         }
     }
 }

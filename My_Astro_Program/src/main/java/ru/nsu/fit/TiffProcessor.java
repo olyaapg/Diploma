@@ -44,6 +44,15 @@ public class TiffProcessor {
         normalizeAndSetMatrix(originalImage.getProcessor().getIntArray());
     }
 
+    /**
+     * Возвращает нормализованную матрицу исходного изображения.
+     *
+     * @return нормализованная матрица изображения.
+     */
+    public double[][] getNormalizedMatrix() {
+        return normalizedMatrix;
+    }
+
     private void normalizeAndSetMatrix(int[][] originalMatrix) {
         int[] pixelArray = Arrays.stream(originalMatrix)
                 .flatMapToInt(Arrays::stream)
@@ -64,31 +73,6 @@ public class TiffProcessor {
         LOGGER.info("Normalization completed.");
     }
 
-    /**
-     * Возвращает нормализованную матрицу исходного изображения.
-     *
-     * @return нормализованная матрица изображения.
-     */
-    public double[][] getNormalizedMatrix() {
-        return normalizedMatrix;
-    }
-
-    /**
-     * Закрашивает цветом пиксель с координатами (u, v) изображения. Используется для отладочных целей.
-     *
-     * @param u     первая координата пикселя.
-     * @param v     вторая координата пикселя.
-     * @param color цвет пикселя.
-     */
-    public void highlightPixel(int u, int v, int color) {
-        if (colorImage == null) {
-            createColorImage();
-        }
-        // Закрашиваем пиксель цветом
-        var p = colorImage.getProcessor();
-        p.putPixel(u, v, color);
-    }
-
     private void createColorImage() {
         int height = originalImage.getHeight();
         int length = originalImage.getWidth();
@@ -107,13 +91,34 @@ public class TiffProcessor {
     }
 
     /**
-     * Сохранить цветное изображение TIFF.
+     * Закрашивает цветом пиксель с координатами (u, v) изображения. Используется для отладочных целей.
      *
-     * @param path путь для сохранения файла.
+     * @param u     первая координата пикселя.
+     * @param v     вторая координата пикселя.
+     * @param color цвет пикселя.
      */
-    public void saveColorTiff(String path) {
-        IJ.saveAsTiff(colorImage, path);
-        LOGGER.info("The result was saved to \"{}\"", path);
+    public void highlightPixel(int u, int v, int color) {
+        if (colorImage == null) {
+            createColorImage();
+        }
+        // Закрашиваем пиксель цветом
+        var p = colorImage.getProcessor();
+        p.putPixel(u, v, color);
+    }
+
+    public void highlightPixelWithSpecificColor(int u, int v, char colorLetter) {
+        if (colorImage == null) {
+            createColorImage();
+        }
+        var p = colorImage.getProcessor();
+        int oldColor = p.getPixel(u, v);
+        if (colorLetter == 'R') {
+            p.putPixel(u, v, (255 << 16) | ((oldColor >> 8) & 0xFF << 8) | oldColor & 0xFF);
+        } else if (colorLetter == 'B') {
+            p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | 255);
+        } else {
+            p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | (255 << 8) | oldColor & 0xFF);
+        }
     }
 
     public void highlightArea(int centerX, int centerY, int radius, int color) {
@@ -126,12 +131,24 @@ public class TiffProcessor {
         double squareRadius = Math.pow(radius, 2);
         for (int x = Math.max(0, centerX - radius); x <= Math.min(length - 1, centerX + radius); x++) {
             for (int y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y++) {
-                var res = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
-                if (res <= squareRadius && squareRadius - 100 <= res) {
+                int diffX = x - centerX;
+                int diffY = y - centerY;
+                var res = diffX * diffX + diffY * diffY;
+                if (res <= squareRadius && squareRadius - 300 <= res) {
                     colorProcessor.putPixel(x, y, color);
                 }
             }
         }
         colorProcessor.putPixel(centerX, centerY, color);
+    }
+
+    /**
+     * Сохранить цветное изображение TIFF.
+     *
+     * @param path путь для сохранения файла.
+     */
+    public void saveColorTiff(String path) {
+        IJ.saveAsTiff(colorImage, path);
+        LOGGER.info("The result was saved to \"{}\"", path);
     }
 }
