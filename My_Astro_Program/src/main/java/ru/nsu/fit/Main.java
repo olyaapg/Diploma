@@ -2,13 +2,13 @@ package ru.nsu.fit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.nsu.fit.points.KeyPoint;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
@@ -24,7 +24,7 @@ public class Main {
     private static String pathToSave;
 
     /**
-     * Запуск программы.
+     * Запуск программы. На концах путей в аргументах должны быть /.
      *
      * @param args путь к изображениям, которые нужно обработать;
      *             путь для сохранения файлов;
@@ -54,11 +54,11 @@ public class Main {
             LOGGER.error("Error reading the directory: {}", pathToImages, e);
             return;
         }
-        List<List<KeyPoint>> results = processFiles(files);
+        List<List<KeyPoint>> results = getKeyPointsFromFiles(files);
         // TODO: совместить точки
     }
 
-    private static List<List<KeyPoint>> processFiles(List<Path> files) {
+    private static List<List<KeyPoint>> getKeyPointsFromFiles(List<Path> files) {
         try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
             List<Future<List<KeyPoint>>> futures = new ArrayList<>();
             for (Path file : files) {
@@ -73,7 +73,7 @@ public class Main {
                 } catch (InterruptedException | ExecutionException e) {
                     LOGGER.error("Internal error occurred");
                     Thread.currentThread().interrupt();
-                    return Collections.emptyList();
+                    throw new RuntimeException(e);
                 }
             }
             return results;

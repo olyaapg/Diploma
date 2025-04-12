@@ -2,6 +2,7 @@ package ru.nsu.fit;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.nsu.fit.points.KeyPoint;
 
 import java.util.ArrayList;
 import java.util.HashSet;

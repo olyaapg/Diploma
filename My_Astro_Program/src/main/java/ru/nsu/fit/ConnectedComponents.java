@@ -1,5 +1,7 @@
 package ru.nsu.fit;
 
+import ru.nsu.fit.points.KeyPoint;
+
 import java.util.*;
 
 

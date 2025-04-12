@@ -3,9 +3,11 @@ package ru.nsu.fit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
-import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
-import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
+import ru.nsu.fit.window_calculators.AverageValueCalculator;
+import ru.nsu.fit.window_calculators.DipoleMomentCalculator;
+import ru.nsu.fit.window_calculators.QuadrupoleMomentCalculator;
+import ru.nsu.fit.window_calculators.ZeroMomentCalculator;
+import ru.nsu.fit.points.KeyPoint;
 
 import java.util.*;
 

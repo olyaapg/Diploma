@@ -1,4 +1,4 @@
-package ru.nsu.fit.moment_calculators;
+package ru.nsu.fit.window_calculators;
 
 public abstract class WindowCalculator {
     protected double[][] matrix;

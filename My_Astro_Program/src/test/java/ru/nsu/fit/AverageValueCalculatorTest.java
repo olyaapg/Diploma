@@ -2,6 +2,7 @@ package ru.nsu.fit;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.nsu.fit.window_calculators.AverageValueCalculator;
 
 class AverageValueCalculatorTest {
     private boolean[][] createMask(int radius) {

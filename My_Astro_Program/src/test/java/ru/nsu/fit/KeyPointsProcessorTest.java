@@ -2,6 +2,8 @@ package ru.nsu.fit;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ru.nsu.fit.points.KeyPoint;
+import ru.nsu.fit.points.KeyPointsProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;

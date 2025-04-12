@@ -1,10 +1,8 @@
-package ru.nsu.fit;
-
-import ru.nsu.fit.moment_calculators.WindowCalculator;
+package ru.nsu.fit.window_calculators;
 
 public class AverageValueCalculator extends WindowCalculator {
 
-    protected AverageValueCalculator(double[][] matrix, boolean[][] mask) {
+    public AverageValueCalculator(double[][] matrix, boolean[][] mask) {
         super(matrix, mask);
     }
 
@@ -35,6 +33,9 @@ public class AverageValueCalculator extends WindowCalculator {
                     }
                 }
             }
+        }
+        if (n == 0) {
+            return new double[]{0};
         }
         return new double[]{sum / n};
     }

@@ -1,9 +1,9 @@
-package ru.nsu.fit.moment_calculators;
+package ru.nsu.fit.window_calculators;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class QuadrupoleMomentCalculatorTest {
+class QuadrupoleMomentCalculatorTest {
     double[][] matrix = {
             {0, 0, 1, 0, 0, 0, 1, 1, 0},
             {0, 2, 2, 2, 0, 0, 0, 0, 0},

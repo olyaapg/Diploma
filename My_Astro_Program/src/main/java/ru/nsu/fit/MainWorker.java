@@ -1,5 +1,8 @@
 package ru.nsu.fit;
 
+import ru.nsu.fit.points.KeyPoint;
+import ru.nsu.fit.points.KeyPointsProcessor;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 

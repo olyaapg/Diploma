@@ -1,4 +1,4 @@
-package ru.nsu.fit;
+package ru.nsu.fit.points;
 
 
 import java.util.Objects;

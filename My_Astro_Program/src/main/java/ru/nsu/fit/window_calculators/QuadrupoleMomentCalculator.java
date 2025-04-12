@@ -1,4 +1,4 @@
-package ru.nsu.fit.moment_calculators;
+package ru.nsu.fit.window_calculators;
 
 /**
  * Класс представляет собой калькулятор подсчета квадрупольного момента для круглой области с центром в (x, y).

@@ -1,7 +1,9 @@
-package ru.nsu.fit;
+package ru.nsu.fit.points;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.nsu.fit.ConnectedComponents;
+import ru.nsu.fit.TiffProcessor;
 
 import java.util.*;
 

@@ -1,10 +1,19 @@
 package ru.nsu.fit;
 
+import com.github.romankh3.image.comparison.ImageComparison;
+import com.github.romankh3.image.comparison.ImageComparisonUtil;
+import com.github.romankh3.image.comparison.model.ImageComparisonResult;
+import com.github.romankh3.image.comparison.model.ImageComparisonState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import ru.nsu.fit.utils.MergeTiffsRGB;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.text.DecimalFormat;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MainTest {
     private static final Logger LOGGER = LogManager.getLogger(MainTest.class);
@@ -46,5 +55,32 @@ class MainTest {
     @Test
     void testFiles() {
         runMain("", 0, 0.0, false);
+    }
+
+    @Test
+    void testMergeTiffsRGB() {
+        String pathToResult = "src/test/resources/testMergeTiffsRGB/merged_output.tif";
+        File file = new File(pathToResult);
+        if (file.delete()) {
+            System.out.println("Файл успешно удален");
+        } else {
+            System.out.println("Не удалось удалить файл. Возможно, он не существует или нет прав доступа.");
+        }
+
+        String[] args = new String[]{
+                "src/test/resources/testMergeTiffsRGB/",
+                "res_001_many_craters.tif",
+                "res_002_many_craters.tif",
+                "res_003_many_craters.tif"
+        };
+        MergeTiffsRGB.main(args);
+        checkImagesForMatch("src/test/resources/testMergeTiffsRGB/original_merged_output.tif", pathToResult);
+    }
+
+    private void checkImagesForMatch(String pathToExpected, String pathToSave) {
+        BufferedImage expectedImage = ImageComparisonUtil.readImageFromResources(pathToExpected);
+        BufferedImage actualImage = ImageComparisonUtil.readImageFromResources(pathToSave);
+        ImageComparisonResult imageComparisonResult = new ImageComparison(expectedImage, actualImage).compareImages();
+        assertEquals(ImageComparisonState.MATCH, imageComparisonResult.getImageComparisonState());
     }
 }
