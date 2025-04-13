@@ -55,6 +55,9 @@ class MainTest {
     @Test
     void testFiles() {
         runMain("", 0, 0.0, false);
+        checkImagesForMatch(
+                "src/test/resources/original_images/part_1/many_craters/expected/original_merged_output.tif",
+                "src/test/resources/original_images/part_1/many_craters/merged_output.tif");
     }
 
     @Test
@@ -73,7 +76,7 @@ class MainTest {
                 "res_002_many_craters.tif",
                 "res_003_many_craters.tif"
         };
-        MergeTiffsRGB.main(args);
+        MergeTiffsRGB.mergeTiffsFiles(args);
         checkImagesForMatch("src/test/resources/testMergeTiffsRGB/original_merged_output.tif", pathToResult);
     }
 

@@ -3,6 +3,7 @@ package ru.nsu.fit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.nsu.fit.points.KeyPoint;
+import ru.nsu.fit.points.KeyPointMatcher;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,25 +46,27 @@ public class Main {
             threshold = Double.parseDouble(args[3]);
         }
 
-        List<Path> files;
+        List<String> fileNames;
         try (Stream<Path> filesStream = Files.list(Paths.get(pathToImages))) {
-            files = filesStream
+            fileNames = filesStream
                     .filter(file -> file.toString().endsWith(".tif"))
+                    .map(Path::getFileName)
+                    .map(Path::toString)
                     .toList();
         } catch (IOException e) {
             LOGGER.error("Error reading the directory: {}", pathToImages, e);
             return;
         }
-        List<List<KeyPoint>> results = getKeyPointsFromFiles(files);
-        // TODO: совместить точки
+        List<List<KeyPoint>> results = getKeyPointsFromFiles(fileNames);
+        KeyPointMatcher.mapKeyPointsOnFiles(pathToImages, fileNames, results);
     }
 
-    private static List<List<KeyPoint>> getKeyPointsFromFiles(List<Path> files) {
+    private static List<List<KeyPoint>> getKeyPointsFromFiles(List<String> fileNames) {
         try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
             List<Future<List<KeyPoint>>> futures = new ArrayList<>();
-            for (Path file : files) {
-                String pathToImage = pathToImages + file.getFileName();
-                String pathToResult = pathToSave + "res_" + file.getFileName();
+            for (String file : fileNames) {
+                String pathToImage = pathToImages + file;
+                String pathToResult = pathToSave + "res_" + file;
                 futures.add(executor.submit(new MainWorker(pathToImage, pathToResult, radius, threshold, DISTANCE)));
             }
             List<List<KeyPoint>> results = new ArrayList<>();
