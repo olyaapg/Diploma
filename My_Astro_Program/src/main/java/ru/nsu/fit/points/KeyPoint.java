@@ -48,5 +48,10 @@ public class KeyPoint extends Point implements Comparable<KeyPoint> {
     public int hashCode() {
         return Objects.hash(getX(), getY(), tmp, theta);
     }
+
+    @Override
+    public String toString() {
+        return "(" + getX() + "; " + getY() + ") ~ " + tmp + " ~ " + theta;
+    }
 }
 

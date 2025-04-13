@@ -54,21 +54,19 @@ class MainTest {
 
     @Test
     void testFiles() {
+        String pathToResult = "src/test/resources/original_images/part_1/many_craters/merged_output.tif";
+        deleteFile(pathToResult);
+
         runMain("", 0, 0.0, false);
         checkImagesForMatch(
                 "src/test/resources/original_images/part_1/many_craters/expected/original_merged_output.tif",
-                "src/test/resources/original_images/part_1/many_craters/merged_output.tif");
+                pathToResult);
     }
 
     @Test
     void testMergeTiffsRGB() {
         String pathToResult = "src/test/resources/testMergeTiffsRGB/merged_output.tif";
-        File file = new File(pathToResult);
-        if (file.delete()) {
-            System.out.println("Файл успешно удален");
-        } else {
-            System.out.println("Не удалось удалить файл. Возможно, он не существует или нет прав доступа.");
-        }
+        deleteFile(pathToResult);
 
         String[] args = new String[]{
                 "src/test/resources/testMergeTiffsRGB/",
@@ -85,5 +83,15 @@ class MainTest {
         BufferedImage actualImage = ImageComparisonUtil.readImageFromResources(pathToSave);
         ImageComparisonResult imageComparisonResult = new ImageComparison(expectedImage, actualImage).compareImages();
         assertEquals(ImageComparisonState.MATCH, imageComparisonResult.getImageComparisonState());
+    }
+
+    private void deleteFile(String path) {
+        File file = new File(path);
+        if (file.delete()) {
+            LOGGER.info("Файл успешно удален");
+        } else {
+            LOGGER.info("Не удалось удалить файл. Возможно, он не существует или нет прав доступа.");
+        }
+
     }
 }

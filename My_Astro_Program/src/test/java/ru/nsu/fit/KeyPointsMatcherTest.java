@@ -6,6 +6,8 @@ import ru.nsu.fit.points.KeyPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import static ru.nsu.fit.points.KeyPointMatcher.matchRecursive;
 
@@ -26,11 +28,14 @@ class KeyPointsMatcherTest {
         list.add(new KeyPoint(3, 3, 0.05, 44));
         points.add(list);
 
-        List<List<KeyPoint>> matches = new ArrayList<>();
-        matchRecursive(points, 0, new ArrayList<>(), matches);
+        List<NavigableSet<KeyPoint>> sortedGroups = points.stream()
+                .map(group -> (NavigableSet<KeyPoint>) new TreeSet<>(group))
+                .toList();
+        List<List<KeyPoint>> result = new ArrayList<>();
+        matchRecursive(sortedGroups, 2, 0, new ArrayList<>(), result);
 
-        Assertions.assertEquals(2, matches.size());
-        Assertions.assertEquals(2, matches.get(0).size());
-        Assertions.assertEquals(2, matches.get(1).size());
+        Assertions.assertEquals(2, result.size());
+        Assertions.assertEquals(2, result.get(0).size());
+        Assertions.assertEquals(2, result.get(1).size());
     }
 }
