@@ -58,7 +58,7 @@ public class Main {
             return;
         }
         List<List<KeyPoint>> results = getKeyPointsFromFiles(fileNames);
-        KeyPointMatcher.mapKeyPointsOnFiles(pathToImages, fileNames, results, radius);
+        KeyPointMatcher.mapKeyPointsOnFiles(pathToSave, fileNames, results, radius);
     }
 
     private static List<List<KeyPoint>> getKeyPointsFromFiles(List<String> fileNames) {

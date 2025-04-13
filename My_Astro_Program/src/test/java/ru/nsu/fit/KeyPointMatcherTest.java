@@ -3,15 +3,14 @@ package ru.nsu.fit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.nsu.fit.points.KeyPoint;
+import ru.nsu.fit.points.KeyPointMatcher;
+import ru.nsu.fit.points.Point;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import static ru.nsu.fit.points.KeyPointMatcher.matchRecursive;
 
-class KeyPointsMatcherTest {
+class KeyPointMatcherTest {
 
     @Test
     void test() {
@@ -37,5 +36,23 @@ class KeyPointsMatcherTest {
         Assertions.assertEquals(2, result.size());
         Assertions.assertEquals(2, result.get(0).size());
         Assertions.assertEquals(2, result.get(1).size());
+    }
+
+    @Test
+    void testFindPointsLine() {
+        List<Point> points = KeyPointMatcher.getLinePoints(2, 3, 5, 1);
+        for (Point p : points) {
+            System.out.println(p);
+        }
+        System.out.println();
+        points = KeyPointMatcher.getLinePoints(1, 6, 2, 2);
+        for (Point p : points) {
+            System.out.println(p);
+        }
+        System.out.println();
+        points = KeyPointMatcher.getLinePoints(2, 2, 2, 2);
+        for (Point p : points) {
+            System.out.println(p);
+        }
     }
 }
