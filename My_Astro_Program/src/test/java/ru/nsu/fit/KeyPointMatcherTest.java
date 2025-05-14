@@ -31,7 +31,7 @@ class KeyPointMatcherTest {
                 .map(group -> (NavigableSet<KeyPoint>) new TreeSet<>(group))
                 .toList();
         List<List<KeyPoint>> result = new ArrayList<>();
-        matchRecursive(sortedGroups, 2, 0, new ArrayList<>(), result);
+        matchRecursive(sortedGroups, 2, new ArrayList<>(), result);
 
         Assertions.assertEquals(2, result.size());
         Assertions.assertEquals(2, result.get(0).size());

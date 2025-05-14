@@ -12,8 +12,9 @@ import java.util.*;
 public class KeyPointMatcher {
     private static final Logger LOGGER = LogManager.getLogger(KeyPointMatcher.class);
 
-    private static final double THRESHOLD_TMP = 0.5;
-    private static final double THRESHOLD_THETA = 5;
+    private static final double THRESHOLD_TMP = 0.6;
+    private static final double THRESHOLD_THETA = 6;
+    private static final double THRESHOLD_DISTANCE = 32;
 
     private KeyPointMatcher() {
         throw new IllegalStateException("Utility class");
@@ -22,8 +23,7 @@ public class KeyPointMatcher {
     public static void mapKeyPointsOnFiles(
             String dirPath,
             List<String> fileNames,
-            List<List<KeyPoint>> points,
-            int radius) {
+            List<List<KeyPoint>> points) {
         String[] args = new String[fileNames.size() + 1];
         args[0] = dirPath;
         for (int i = 1; i <= fileNames.size(); i++) {
@@ -37,9 +37,18 @@ public class KeyPointMatcher {
                 .map(group -> (NavigableSet<KeyPoint>) new TreeSet<>(group))
                 .toList();
         List<List<KeyPoint>> result = new ArrayList<>();
-        matchRecursive(sortedGroups, radius, 0, new ArrayList<>(), result);
-        List<List<KeyPoint>> cleaned = filterDuplicatesAndPickBest(result);
+        matchRecursive(sortedGroups, 0, new ArrayList<>(), result);
+        StringBuilder b = new StringBuilder();
+        LOGGER.info("ВСЕ КОРТЕЖИ");
+        for (List<KeyPoint> tuple : result) {
+            for (KeyPoint keyPoint : tuple) {
+                b.append(keyPoint).append(" -- ");
+            }
+            b.append("\n");
+        }
+        LOGGER.info(b);
 
+        List<List<KeyPoint>> cleaned = filterDuplicatesAndPickBest(result);
         for (List<KeyPoint> list : cleaned) {
             KeyPoint first = list.get(0);
             for (int i = 1; i < list.size(); i++) {
@@ -47,13 +56,13 @@ public class KeyPointMatcher {
                 List<Point> pointsBetween = getLinePoints(first.getX(), first.getY(), second.getX(), second.getY());
                 for (int j = 0; j < pointsBetween.size() - 1; j++) {
                     var p = pointsBetween.get(j);
-                    processor.putPixel(p.getY(), p.getX(), 65535);
+                    processor.putPixel(p.getY(), p.getX(), 255 << 16 | 255 << 8 | 255);
                 }
             }
         }
         IJ.save(image, dirPath + "RESULT.tif");
 
-        StringBuilder b = new StringBuilder();
+        b = new StringBuilder();
         LOGGER.info("СОПОСТАВЛЕННЫЕ КОРТЕЖИ");
         for (List<KeyPoint> tuple : cleaned) {
             for (KeyPoint keyPoint : tuple) {
@@ -97,7 +106,6 @@ public class KeyPointMatcher {
 
     public static void matchRecursive(
             List<NavigableSet<KeyPoint>> groups,
-            double maxDistance,
             int depth,
             List<KeyPoint> currentMatch,
             List<List<KeyPoint>> result
@@ -111,7 +119,7 @@ public class KeyPointMatcher {
         if (depth == 0) {
             for (KeyPoint kp : currentGroup) {
                 currentMatch.add(kp);
-                matchRecursive(groups, maxDistance, depth + 1, currentMatch, result);
+                matchRecursive(groups, depth + 1, currentMatch, result);
                 currentMatch.remove(currentMatch.size() - 1);
             }
             return;
@@ -125,9 +133,9 @@ public class KeyPointMatcher {
         KeyPoint upper = new KeyPoint(0, 0, maxTmp, Double.MAX_VALUE);
 
         for (KeyPoint candidate : currentGroup.subSet(lower, true, upper, true)) {
-            if (isCompatible(currentMatch, candidate, maxDistance)) {
+            if (isCompatible(currentMatch, candidate)) {
                 currentMatch.add(candidate);
-                matchRecursive(groups, maxDistance, depth + 1, currentMatch, result);
+                matchRecursive(groups, depth + 1, currentMatch, result);
                 currentMatch.remove(currentMatch.size() - 1);
             }
         }
@@ -135,19 +143,18 @@ public class KeyPointMatcher {
 
     private static boolean isCompatible(
             List<KeyPoint> group,
-            KeyPoint candidate,
-            double maxDistance
-    ) {
+            KeyPoint candidate) {
         for (KeyPoint kp : group) {
-            if (Math.abs(kp.getTmp() - candidate.getTmp()) > THRESHOLD_TMP) return false;
-//            if (Math.abs(kp.getTheta() - candidate.getTheta()) > THRESHOLD_THETA) return false;
-
             int dx = kp.getX() - candidate.getX();
             int dy = kp.getY() - candidate.getY();
             double distance = Math.hypot(dx, dy);
-            if (distance > maxDistance) return false;
+            if (distance > THRESHOLD_DISTANCE) return false;
+            if ((Math.abs(kp.getTmp() - candidate.getTmp()) <= THRESHOLD_TMP) ||
+                    (Math.abs(kp.getTheta() - candidate.getTheta()) <= THRESHOLD_THETA)
+            )
+                return true;
         }
-        return true;
+        return false;
     }
 
     public static List<List<KeyPoint>> filterDuplicatesAndPickBest(List<List<KeyPoint>> rawMatches) {

@@ -101,7 +101,7 @@ public class SlidingWindowProcessor {
                     qmc.setAvgVal(avgVal);
                     double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
 
-                    double theta = 0.5 * Math.atan2(-2 * arrQ[1], arrQ[2] - arrQ[0]);
+                    double theta = 0.5 * Math.atan2(2 * arrQ[1], arrQ[0] - arrQ[2]);
                     degrees.add((int) Math.round(theta * 57.2958));
                     double cos = Math.cos(theta);
                     double sin = Math.sin(theta);
@@ -138,7 +138,7 @@ public class SlidingWindowProcessor {
         for (Object i : degrees.toArray()) {
             sb.append(i).append(" ");
         }
-        LOGGER.info("Значения градусов, которые встречались: {}", sb);
+//        LOGGER.info("Значения градусов, которые встречались: {}", sb);
         return points;
     }
 }

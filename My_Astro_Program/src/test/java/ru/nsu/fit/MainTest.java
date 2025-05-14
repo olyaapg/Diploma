@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class MainTest {
     private static final Logger LOGGER = LogManager.getLogger(MainTest.class);
 
-    private static final String DIR_ORIGINALS = "src/test/resources/original_images/part_1/many_craters/";
-    private static final String DIR_RESULT = "src/test/resources/final_test/";
+    private static final String DIR_ORIGINALS = "src/test/resources/original_images/part_3/crater1/";
+    private static final String DIR_RESULT = "src/test/resources/final_test_crater1/";
 
     private static final int DISTANCE = 3;
 
