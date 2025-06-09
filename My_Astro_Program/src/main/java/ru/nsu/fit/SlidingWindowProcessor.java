@@ -3,14 +3,14 @@ package ru.nsu.fit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.nsu.fit.moment_calculators.DipoleMomentCalculator;
-import ru.nsu.fit.moment_calculators.QuadrupoleMomentCalculator;
-import ru.nsu.fit.moment_calculators.ZeroMomentCalculator;
+import ru.nsu.fit.window_calculators.AverageValueCalculator;
+import ru.nsu.fit.window_calculators.DipoleMomentCalculator;
+import ru.nsu.fit.window_calculators.QuadrupoleMomentCalculator;
+import ru.nsu.fit.window_calculators.ZeroMomentCalculator;
+import ru.nsu.fit.points.KeyPoint;
 
-import static ru.nsu.fit.utils.Utils.normalizeComponent;
-import static ru.nsu.fit.utils.Utils.normalizeModule;
+import java.util.*;
 
-// TODO: проверить всё на double и int (суммы и т.п.)
 
 /**
  * Класс SlidingWindowProcessor представляет собой алгоритм прохождения скользящего окна по входному изображению TIFF.
@@ -24,8 +24,8 @@ public class SlidingWindowProcessor {
     private final double[][] normalizedMatrix;
     private boolean[][] mask;
 
-    private static final int THRESHOLD_DIPOLE = 5_000;
-    private static final int THRESHOLD_QUADRUPOLE = 10_000;
+    private static final int THRESHOLD_FOR_ZERO_MOMENT = 2_000;
+    private static final int THRESHOLD_DIPOLE = 10000;
 
     /**
      * Создает объект класса SlidingWindowProcessor, получая нормализованную матрицу исходного изображения.
@@ -53,12 +53,13 @@ public class SlidingWindowProcessor {
      * Запускает алгоритм скользящего окна с указанными радиусом и трешхолдом для нулевого момента (для отсеивания темноты).
      *
      * @param radius    радиус скользящего окна.
-     * @param threshold порог для отбрасывания ненужных темных пикселей.
+     * @param threshold стартовый порог для нахождения ключевых точек: (x^2-y^2)/(x^2+y^2) < threshold.
+     * @return список точек, входящих в найденные лужи
      */
-    public void runSlidingWindow(int radius, double threshold) {
+    public List<KeyPoint> runSlidingWindow(int radius, double threshold) {
         if (radius == 0) {
             LOGGER.error("The radius must not be zero!");
-            return;
+            return Collections.emptyList();
         }
         int rows = normalizedMatrix[0].length; // 2822
         int cols = normalizedMatrix.length; // 4144
@@ -69,10 +70,14 @@ public class SlidingWindowProcessor {
         double[] pXpY;
         double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
         double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+        Set<Integer> degrees = new HashSet<>();
 
-        ZeroMomentCalculator zeroMomentCalculator = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
-        DipoleMomentCalculator dipoleMomentCalculator = new DipoleMomentCalculator(normalizedMatrix, mask);
-        QuadrupoleMomentCalculator quadrupoleMomentCalculator = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+        ZeroMomentCalculator zmc = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
+        DipoleMomentCalculator dmc = new DipoleMomentCalculator(normalizedMatrix, mask);
+        QuadrupoleMomentCalculator qmc = new QuadrupoleMomentCalculator(normalizedMatrix, mask);
+
+        AverageValueCalculator avc = new AverageValueCalculator(normalizedMatrix, mask);
+        List<KeyPoint> points = new ArrayList<>();
         // Перебираем центральные точки
         // Пока что только с полным вхождением окна в границы картинки
         for (int x = radius; x < rows - radius; x++) {
@@ -81,58 +86,59 @@ public class SlidingWindowProcessor {
             int endX = Math.min(rows - 1, x);
             for (int y = radius; y < cols - radius; y++) {
                 int startY = y - radius;
-//                sum = zeroMomentCalculator.calculate(x, y, startX, endX, startY, y)[0];
-//                if (sum <= threshold) {
-//                    continue;
-//                }
-//                pXpY = dipoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                var module = Math.hypot(pXpY[0], pXpY[1]);
-//                if (module < THRESHOLD_DIPOLE) {
-                double[] arrQ = quadrupoleMomentCalculator.calculate(x, y, startX, endX, startY, y);
-//                if (maxDiff[0] < arrQ[0]) {
-//                    maxDiff[0] = arrQ[0];
-//                }
-//                if (minDiff[0] > arrQ[0]) {
-//                    minDiff[0] = arrQ[0];
-//                }
-//                if (maxDiff[1] < arrQ[1]) {
-//                    maxDiff[1] = arrQ[1];
-//                }
-//                if (minDiff[1] > arrQ[1]) {
-//                    minDiff[1] = arrQ[1];
-//                }
-//                if (maxDiff[2] < arrQ[2]) {
-//                    maxDiff[2] = arrQ[2];
-//                }
-//                if (minDiff[2] > arrQ[2]) {
-//                    minDiff[2] = arrQ[2];
-//                }
+                double sum = zmc.calculate(x, y, startX, endX, startY, y)[0];
+                if (sum <= THRESHOLD_FOR_ZERO_MOMENT) {
+                    continue;
+                }
+                double avgVal = avc.calculate(x, y, startX, endX, startY, y)[0];
 
-                var tmp = (arrQ[0] - arrQ[2]) / (arrQ[0] + arrQ[2]);
-                if (maxDiff[2] < tmp) {
-                    maxDiff[2] = tmp;
+                dmc.setAvgVal(avgVal);
+                pXpY = dmc.calculate(x, y, startX, endX, startY, y);
+
+                var module = Math.hypot(pXpY[0], pXpY[1]);
+
+                if (module < THRESHOLD_DIPOLE) {
+                    qmc.setAvgVal(avgVal);
+                    double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
+
+                    double theta = 0.5 * Math.atan2(2 * arrQ[1], arrQ[0] - arrQ[2]);
+                    degrees.add((int) Math.round(theta * 57.2958));
+                    double cos = Math.cos(theta);
+                    double sin = Math.sin(theta);
+                    theta = (int) Math.round(theta * 57.2958);
+                    double squareCos = Math.pow(cos, 2);
+                    double squareSin = Math.pow(sin, 2);
+
+                    double[] arrQRotated = new double[3];
+                    arrQRotated[0] = arrQ[0] * squareCos + 2 * arrQ[1] * sin * cos + arrQ[2] * squareSin;
+                    arrQRotated[1] = (arrQ[2] - arrQ[0]) * sin * cos + arrQ[1] * (squareCos - squareSin);
+                    arrQRotated[2] = arrQ[0] * squareSin - 2 * arrQ[1] * sin * cos + arrQ[2] * squareCos;
+
+                    var tmp = (arrQRotated[0] - arrQRotated[2]) / (arrQRotated[0] + arrQRotated[2]);
+                    tmp = Math.abs(tmp);
+                    if (maxDiff[2] < tmp) {
+                        maxDiff[2] = tmp;
+                    }
+                    if (minDiff[2] > tmp) {
+                        minDiff[2] = tmp;
+                    }
+                    if (tmp < threshold) {
+                        tiffProcessor.highlightPixelWithSpecificColor(y, x, 'B');
+//                        LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
+                        points.add(new KeyPoint(x, y, tmp, theta));
+                    }
                 }
-                if (minDiff[2] > tmp) {
-                    minDiff[2] = tmp;
-                }
-                if (tmp > -0.01 && tmp < 0.01) {
-                    tiffProcessor.highlightPixel(y, x, 255);
-                }
-//                tiffProcessor.highlightPixel(y, x,
-//                        normalizeComponent(arrQ[0], 496) << 16 |
-//                                normalizeComponent(arrQ[1], 676) << 8 |
-//                                normalizeComponent(arrQ[2], 496));
-                //                    if (arrQ[1] < THRESHOLD_QUADRUPOLE && arrQ[1] > -1 * THRESHOLD_QUADRUPOLE) {
-//                        tiffProcessor.highlightPixel(y, x, 255 << 16);
-//                    }
-//                }
             }
             if (x % progress == 0) {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-        LOGGER.info("max Qxx = {}, min Qxx = {}", maxDiff[0], minDiff[0]);
-        LOGGER.info("max Qxy = {}, min Qxy = {}", maxDiff[1], minDiff[1]);
-        LOGGER.info("max Qyy = {}, min Qyy = {}", maxDiff[2], minDiff[2]);
+        LOGGER.info("max tmp = {}, min tmp = {}", maxDiff[2], minDiff[2]);
+        StringBuilder sb = new StringBuilder();
+        for (Object i : degrees.toArray()) {
+            sb.append(i).append(" ");
+        }
+//        LOGGER.info("Значения градусов, которые встречались: {}", sb);
+        return points;
     }
 }

@@ -23,14 +23,23 @@ class CheckCorrectnessOctupoleMoment {
 
         double sumOiik = 0;
         double sumOijj = 0;
-        double sum = 0;
-
-        double norm = Double.MIN_VALUE;
 
         for (int x = RADIUS; x < rows - RADIUS; x++) {
             for (int y = RADIUS; y < cols - RADIUS; y++) {
                 double[] arrQ = new double[]{0, 0, 0, 0};
                 // Ограничиваем прямоугольную область
+
+                double sum = 0;
+                int n = 0;
+                for (int i = x - RADIUS; i <= x + RADIUS; i++) {
+                    for (int j = y - RADIUS; j <= y + RADIUS; j++) {
+                        // todo оч криво считается у нас ведь маска
+                        sum += normalizedMatrix[j][i];
+                        n++;
+                    }
+                }
+                double average = sum / n;
+
                 for (int i = x - RADIUS; i <= x + RADIUS; i++) {
                     for (int j = y - RADIUS; j <= y + RADIUS; j++) {
                         if (Math.pow((double) i - x, 2) + Math.pow((double) j - y, 2) <= squareRadius) {
@@ -39,10 +48,11 @@ class CheckCorrectnessOctupoleMoment {
                             double squareXi = xi * xi;
                             double squareYi = yi * yi;
                             double squareRi = squareXi + squareYi;
-                            arrQ[0] += normalizedMatrix[j][i] * (5 * squareXi - 3 * squareRi) * xi; //Oxxx
-                            arrQ[1] += normalizedMatrix[j][i] * (5 * squareXi - squareRi) * yi; //Oxxy
-                            arrQ[2] += normalizedMatrix[j][i] * (5 * squareYi - squareRi) * xi; //Oxyy
-                            arrQ[3] += normalizedMatrix[j][i] * (5 * squareYi - 3 * squareRi) * yi; //Oyyy
+                            double q = normalizedMatrix[j][i] / average;
+                            arrQ[0] += q * (5 * squareXi - 3 * squareRi) * xi; //Oxxx
+                            arrQ[1] += q * (5 * squareXi - squareRi) * yi; //Oxxy
+                            arrQ[2] += q * (5 * squareYi - squareRi) * xi; //Oxyy
+                            arrQ[3] += q * (5 * squareYi - 3 * squareRi) * yi; //Oyyy
                         }
                     }
                 }
@@ -70,7 +80,7 @@ class CheckCorrectnessOctupoleMoment {
                 if (minDiff[3] > arrQ[3]) {
                     minDiff[3] = arrQ[3];
                 }
-                tiffProcessor.highlightPixel(y, x, (int)arrQ[3]);
+                tiffProcessor.highlightPixel(y, x, normalizeModule(arrQ[0], 35653)<<16);
 //                sumOiik += arrQ[1];
 //                sumOijj += arrQ[2];
 //                tiffProcessor.highlightPixel(y, x,

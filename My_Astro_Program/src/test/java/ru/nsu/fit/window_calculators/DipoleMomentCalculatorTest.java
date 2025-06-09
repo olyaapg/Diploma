@@ -1,4 +1,4 @@
-package ru.nsu.fit.moment_calculators;
+package ru.nsu.fit.window_calculators;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

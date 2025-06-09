@@ -11,8 +11,6 @@ import java.util.Arrays;
 
 import static ru.nsu.fit.utils.QuickSelect.findKthLargest;
 
-// TODO: А можно сразу стек изображений открывать?
-
 /**
  * TiffProcessor класс представляет собой процессор для работы с изображениями формата TIFF.
  * Включает в себя закрашивание пикселей, открытие и сохранение файла, нормализацию значений пикселей.
@@ -44,6 +42,15 @@ public class TiffProcessor {
         normalizeAndSetMatrix(originalImage.getProcessor().getIntArray());
     }
 
+    /**
+     * Возвращает нормализованную матрицу исходного изображения.
+     *
+     * @return нормализованная матрица изображения.
+     */
+    public double[][] getNormalizedMatrix() {
+        return normalizedMatrix;
+    }
+
     private void normalizeAndSetMatrix(int[][] originalMatrix) {
         int[] pixelArray = Arrays.stream(originalMatrix)
                 .flatMapToInt(Arrays::stream)
@@ -64,13 +71,21 @@ public class TiffProcessor {
         LOGGER.info("Normalization completed.");
     }
 
-    /**
-     * Возвращает нормализованную матрицу исходного изображения.
-     *
-     * @return нормализованная матрица изображения.
-     */
-    public double[][] getNormalizedMatrix() {
-        return normalizedMatrix;
+    private void createColorImage() {
+        int height = originalImage.getHeight();
+        int length = originalImage.getWidth();
+        ImageProcessor originalProcessor = originalImage.getProcessor();
+        ColorProcessor colorProcessor = new ColorProcessor(length, height);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < length; x++) {
+                int pixelValue = originalProcessor.getPixel(x, y);
+                int scaledValue = (int) ((pixelValue / 65535.0) * 255.0);
+                int rgb = (scaledValue << 16) | (scaledValue << 8) | scaledValue;
+                colorProcessor.putPixel(x, y, rgb);
+            }
+        }
+        colorImage = new ImagePlus("Colorized Image", colorProcessor);
+        colorImage.show();
     }
 
     /**
@@ -89,21 +104,40 @@ public class TiffProcessor {
         p.putPixel(u, v, color);
     }
 
-    private void createColorImage() {
-        int height = originalImage.getHeight();
-        int length = originalImage.getWidth();
-        ImageProcessor originalProcessor = originalImage.getProcessor();
-        ColorProcessor colorProcessor = new ColorProcessor(length, height);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < length; x++) {
-                int pixelValue = originalProcessor.getPixel(x, y);
-                int scaledValue = (int) ((pixelValue / 65535.0) * 255.0);
-                int rgb = (scaledValue << 16) | (scaledValue << 8) | scaledValue;
-                colorProcessor.putPixel(x, y, rgb);
+    public void highlightPixelWithSpecificColor(int u, int v, char colorLetter) {
+        if (colorImage == null) {
+            createColorImage();
+        }
+        var p = colorImage.getProcessor();
+        int oldColor = p.getPixel(u, v);
+        if (colorLetter == 'R') {
+            p.putPixel(u, v, (255 << 16) | ((oldColor >> 8) & 0xFF << 8) | oldColor & 0xFF);
+        } else if (colorLetter == 'B') {
+            p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | ((oldColor >> 8) & 0xFF << 8) | 255);
+        } else {
+            p.putPixel(u, v, ((oldColor >> 16) & 0xFF << 16) | (255 << 8) | oldColor & 0xFF);
+        }
+    }
+
+    public void highlightArea(int centerX, int centerY, int radius, int color) {
+        if (colorImage == null) {
+            createColorImage();
+        }
+        ImageProcessor colorProcessor = colorImage.getProcessor();
+        int height = colorImage.getHeight();
+        int length = colorImage.getWidth();
+        double squareRadius = Math.pow(radius, 2);
+        for (int x = Math.max(0, centerX - radius); x <= Math.min(length - 1, centerX + radius); x++) {
+            for (int y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y++) {
+                int diffX = x - centerX;
+                int diffY = y - centerY;
+                var res = diffX * diffX + diffY * diffY;
+                if (res <= squareRadius && squareRadius - 300 <= res) {
+                    colorProcessor.putPixel(x, y, color);
+                }
             }
         }
-        colorImage = new ImagePlus("Colorized Image", colorProcessor);
-        colorImage.show();
+        colorProcessor.putPixel(centerX, centerY, color);
     }
 
     /**
