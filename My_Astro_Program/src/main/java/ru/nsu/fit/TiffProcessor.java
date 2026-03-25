@@ -51,13 +51,14 @@ public class TiffProcessor {
         return normalizedMatrix;
     }
 
-    private void normalizeAndSetMatrix(int[][] originalMatrix) {
+    private void normalizeAndSetMatrix(int[][] originalMatrix)  {
         int[] pixelArray = Arrays.stream(originalMatrix)
                 .flatMapToInt(Arrays::stream)
                 .toArray();
         int n = pixelArray.length;
         int index = (int) Math.ceil(PERCENT_FOR_BRIGHTNESS * n) - 1;
         int maxBrightness = findKthLargest(pixelArray, index);
+//        int maxBrightness = 65535;
         LOGGER.info("Maximum brightness for {}% of pixels: {}", PERCENT_FOR_BRIGHTNESS * 100, maxBrightness);
         int rows = originalMatrix.length;
         int cols = originalMatrix[0].length;
