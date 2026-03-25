@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class MainTest {
     private static final Logger LOGGER = LogManager.getLogger(MainTest.class);
 
-    private static final String DIR_ORIGINALS = "src/test/resources/original_images/part_3/crater1/";
-    private static final String DIR_RESULT = "src/test/resources/final_test_crater1/";
+    private static final String DIR_ORIGINALS = "src/test/resources/boards/";
+    private static final String DIR_RESULT = "src/test/resources/boards/result/";
 
     private static final int DISTANCE = 3;
 
@@ -54,10 +54,10 @@ class MainTest {
 
     @Test
     void testFiles() {
-        String pathToResult = "src/test/resources/original_images/part_1/many_craters/merged_output.tif";
-        deleteFile(pathToResult);
+//        String pathToResult = "src/test/resources/original_images/part_1/many_craters/merged_output.tif";
+//        deleteFile(pathToResult);
 
-        runMain("", 0, 0.0, false);
+        runMain("", 100, 5.0, false);
 //        checkImagesForMatch(
 //                "src/test/resources/original_images/part_1/many_craters/expected/original_merged_output.tif",
 //                pathToResult);
@@ -92,6 +92,5 @@ class MainTest {
         } else {
             LOGGER.info("Не удалось удалить файл. Возможно, он не существует или нет прав доступа.");
         }
-
     }
 }

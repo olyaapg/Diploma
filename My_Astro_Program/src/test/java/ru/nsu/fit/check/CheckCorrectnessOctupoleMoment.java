@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import ru.nsu.fit.TiffProcessor;
 
-import static ru.nsu.fit.utils.Utils.normalizeComponent;
 import static ru.nsu.fit.utils.Utils.normalizeModule;
 
 class CheckCorrectnessOctupoleMoment {

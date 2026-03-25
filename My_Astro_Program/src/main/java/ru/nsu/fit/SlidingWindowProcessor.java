@@ -25,7 +25,7 @@ public class SlidingWindowProcessor {
     private boolean[][] mask;
 
     private static final int THRESHOLD_FOR_ZERO_MOMENT = 2_000;
-    private static final int THRESHOLD_DIPOLE = 10000;
+    private static final int THRESHOLD_DIPOLE = 10_000;
 
     /**
      * Создает объект класса SlidingWindowProcessor, получая нормализованную матрицу исходного изображения.
@@ -70,7 +70,7 @@ public class SlidingWindowProcessor {
         double[] pXpY;
         double[] maxDiff = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE};
         double[] minDiff = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
-        Set<Integer> degrees = new HashSet<>();
+        Set<Double> degrees = new HashSet<>();
 
         ZeroMomentCalculator zmc = new ZeroMomentCalculator(normalizedMatrix, mask, radius);
         DipoleMomentCalculator dmc = new DipoleMomentCalculator(normalizedMatrix, mask);
@@ -102,12 +102,12 @@ public class SlidingWindowProcessor {
                     double[] arrQ = qmc.calculate(x, y, startX, endX, startY, y);
 
                     double theta = 0.5 * Math.atan2(2 * arrQ[1], arrQ[0] - arrQ[2]);
-                    degrees.add((int) Math.round(theta * 57.2958));
                     double cos = Math.cos(theta);
                     double sin = Math.sin(theta);
-                    theta = (int) Math.round(theta * 57.2958);
                     double squareCos = Math.pow(cos, 2);
                     double squareSin = Math.pow(sin, 2);
+                    theta = Math.toDegrees(theta);
+                    degrees.add(theta);
 
                     double[] arrQRotated = new double[3];
                     arrQRotated[0] = arrQ[0] * squareCos + 2 * arrQ[1] * sin * cos + arrQ[2] * squareSin;
@@ -125,6 +125,7 @@ public class SlidingWindowProcessor {
                     if (tmp < threshold) {
                         tiffProcessor.highlightPixelWithSpecificColor(y, x, 'B');
 //                        LOGGER.info("({}; {}) ~ {}° ~ {}", x, y, theta, tmp);
+//                        points.add(new KeyPoint(x, y, tmp, arrQRotated[0] - arrQRotated[2]));
                         points.add(new KeyPoint(x, y, tmp, theta));
                     }
                 }
@@ -133,7 +134,7 @@ public class SlidingWindowProcessor {
                 LOGGER.info("Progress of the sliding window: {}%", (x / progress) * 10);
             }
         }
-        LOGGER.info("max tmp = {}, min tmp = {}", maxDiff[2], minDiff[2]);
+        LOGGER.info("По всем точкам max tmp = {}, min tmp = {}", maxDiff[2], minDiff[2]);
         StringBuilder sb = new StringBuilder();
         for (Object i : degrees.toArray()) {
             sb.append(i).append(" ");
