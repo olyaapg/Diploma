@@ -24,8 +24,18 @@ public class SlidingWindowProcessor {
     private final double[][] normalizedMatrix;
     private boolean[][] mask;
 
-    private static final int THRESHOLD_FOR_ZERO_MOMENT = 2_000;
-    private static final int THRESHOLD_DIPOLE = 10_000;
+    private static final double THRESHOLD_FOR_ZERO_MOMENT = 2_000; // HEATMAP: поставить в 0 для хитмапа
+    private static final double THRESHOLD_DIPOLE = 10_000; // HEATMAP: поставить в Double.MAX_VALUE для хитмапа
+    private double maxTmp = 0;
+    private double minTmp = 0;
+
+    public double getMaxTmp() {
+        return maxTmp;
+    }
+
+    public double getMinTmp() {
+        return minTmp;
+    }
 
     /**
      * Создает объект класса SlidingWindowProcessor, получая нормализованную матрицу исходного изображения.
@@ -95,7 +105,7 @@ public class SlidingWindowProcessor {
                 dmc.setAvgVal(avgVal);
                 pXpY = dmc.calculate(x, y, startX, endX, startY, y);
 
-                var module = Math.hypot(pXpY[0], pXpY[1]);
+                double module = Math.hypot(pXpY[0], pXpY[1]);
 
                 if (module < THRESHOLD_DIPOLE) {
                     qmc.setAvgVal(avgVal);
@@ -135,6 +145,8 @@ public class SlidingWindowProcessor {
             }
         }
         LOGGER.info("По всем точкам max tmp = {}, min tmp = {}", maxDiff[2], minDiff[2]);
+        maxTmp = maxDiff[2];
+        minTmp = minDiff[2];
         StringBuilder sb = new StringBuilder();
         for (Object i : degrees.toArray()) {
             sb.append(i).append(" ");

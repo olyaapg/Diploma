@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import ru.nsu.fit.points.KeyPoint;
 import ru.nsu.fit.points.KeyPointsProcessor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -34,11 +35,16 @@ public class MainWorker implements Callable<List<KeyPoint>> {
 
         // LOG PUDDLES
         //logPoints(puddles, tiffProcessor, "PUDDLES");
+
         tiffProcessor.highlightArea(radius, radius, radius, 255 << 16 | 255 << 8 | 150);
 
         KeyPointsProcessor keyPointsProcessor = new KeyPointsProcessor(distance);
         List<KeyPoint> resultKeyPoints = keyPointsProcessor.findKeyPointsFromPuddles(puddles, tiffProcessor);
 
+        // CREATE HEATMAP
+        //List<KeyPoint> resultKeyPoints = createHeatmap(slidingWindowProcessor, tiffProcessor, puddles);
+
+        // LOG POINTS
         //logPoints(resultKeyPoints, tiffProcessor, "RESULT KEY POINTS");
 
         tiffProcessor.saveColorTiff(pathToSave);
@@ -72,5 +78,22 @@ public class MainWorker implements Callable<List<KeyPoint>> {
         LOGGER.info("Max tmp = {}", maxTmp);
         LOGGER.info("Min tmp = {}", minTmp);
         LOGGER.info("Average tmp = {}", averageTmp);
+    }
+
+    private List<KeyPoint> createHeatmap(SlidingWindowProcessor slidingWindowProcessor, TiffProcessor tiffProcessor, List<KeyPoint> puddles) {
+        List<KeyPoint> resultKeyPoints = Collections.emptyList();
+        var maxLog = Math.log(slidingWindowProcessor.getMaxTmp());
+        var minLog = Math.log(slidingWindowProcessor.getMinTmp());
+        for (KeyPoint keyPoint : puddles) {
+            double tmpLog = Math.log(keyPoint.getTmp());
+            double t = (tmpLog - minLog) / (maxLog - minLog);
+            if (t < 0) t = 0;
+            if (t > 1) t = 1;
+            int value = (int) (t * 255);
+            int b = 255 - value;
+            int color = (value << 16) | (0) | b;
+            tiffProcessor.highlightPixel(keyPoint.getY(), keyPoint.getX(), color);
+        }
+        return resultKeyPoints;
     }
 }
