@@ -38,11 +38,11 @@ public class MainWorker implements Callable<List<KeyPoint>> {
 
         tiffProcessor.highlightArea(radius, radius, radius, 255 << 16 | 255 << 8 | 150);
 
-        KeyPointsProcessor keyPointsProcessor = new KeyPointsProcessor(distance);
-        List<KeyPoint> resultKeyPoints = keyPointsProcessor.findKeyPointsFromPuddles(puddles, tiffProcessor);
+        KeyPointsProcessor keyPointsProcessor = new KeyPointsProcessor(distance, tiffProcessor);
+        List<KeyPoint> resultKeyPoints = keyPointsProcessor.findKeyPointsFromPuddles(puddles);
 
         // CREATE HEATMAP
-        //List<KeyPoint> resultKeyPoints = createHeatmap(slidingWindowProcessor, tiffProcessor, puddles);
+//        List<KeyPoint> resultKeyPoints = createHeatmap(slidingWindowProcessor, tiffProcessor, puddles);
 
         // LOG POINTS
         //logPoints(resultKeyPoints, tiffProcessor, "RESULT KEY POINTS");
@@ -80,20 +80,23 @@ public class MainWorker implements Callable<List<KeyPoint>> {
         LOGGER.info("Average tmp = {}", averageTmp);
     }
 
-    private List<KeyPoint> createHeatmap(SlidingWindowProcessor slidingWindowProcessor, TiffProcessor tiffProcessor, List<KeyPoint> puddles) {
-        List<KeyPoint> resultKeyPoints = Collections.emptyList();
+    private List<KeyPoint> createHeatmap(SlidingWindowProcessor slidingWindowProcessor, TiffProcessor tiffProcessor, List<KeyPoint> points) {
         var maxLog = Math.log(slidingWindowProcessor.getMaxTmp());
         var minLog = Math.log(slidingWindowProcessor.getMinTmp());
-        for (KeyPoint keyPoint : puddles) {
-            double tmpLog = Math.log(keyPoint.getTmp());
-            double t = (tmpLog - minLog) / (maxLog - minLog);
+        var diff = maxLog - minLog;
+        for (KeyPoint keyPoint : points) {
+            double tmp = Math.max(keyPoint.getTmp(), 1e-12);
+            double tmpLog = Math.log(tmp);
+            double t = (tmpLog - minLog) / diff;
+            t = Math.pow(t, 0.4);
             if (t < 0) t = 0;
             if (t > 1) t = 1;
-            int value = (int) (t * 255);
-            int b = 255 - value;
-            int color = (value << 16) | (0) | b;
+            int r = (int) (255 * t); //красный → высокие
+            int g = (int) (255 * (1 - Math.abs(t - 0.5) * 2)); //зелёный → средние
+            int b = (int) (255 * (1 - t)); //синий → низкие
+            int color = (r << 16) | (g << 8) | b;
             tiffProcessor.highlightPixel(keyPoint.getY(), keyPoint.getX(), color);
         }
-        return resultKeyPoints;
+        return Collections.emptyList();
     }
 }

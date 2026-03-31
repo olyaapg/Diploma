@@ -16,7 +16,8 @@ class KeyPointsProcessorTest {
     }
 
     private void checkWithDistance(List<KeyPoint> points, List<KeyPoint> expectedResult, int distance) {
-        KeyPointsProcessor kpp = new KeyPointsProcessor(distance);
+        // tiffProcessor с null сломает все
+        KeyPointsProcessor kpp = new KeyPointsProcessor(distance, null);
         List<KeyPoint> result = new ArrayList<>();
         kpp.findKeyPoints(points, result);
         Collections.sort(result);

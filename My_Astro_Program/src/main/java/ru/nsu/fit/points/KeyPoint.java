@@ -40,8 +40,8 @@ public class KeyPoint extends Point implements Comparable<KeyPoint> {
         if (!(obj instanceof KeyPoint other)) return false;
         return this.getX() == other.getX() &&
                 this.getY() == other.getY() &&
-                Double.compare(this.tmp, other.tmp) == 0 &&
-                Double.compare(this.theta, other.theta) == 0;
+                Math.abs(this.tmp - other.tmp) < 1e-9 &&
+                Math.abs(this.theta - other.theta) < 2;
     }
 
     @Override

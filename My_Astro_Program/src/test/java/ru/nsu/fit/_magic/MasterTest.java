@@ -19,7 +19,7 @@ class MasterTest {
 
     @Test
     void testFiles() {
-        String imageName = "001_cropped.tif";
+        String imageName = "067_lower_left_corner.tif";
 
         deleteFile(DIR_RESULT + "res_" + imageName);
 

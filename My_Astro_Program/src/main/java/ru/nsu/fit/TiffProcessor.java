@@ -72,7 +72,10 @@ public class TiffProcessor {
         LOGGER.info("Normalization completed.");
     }
 
-    private void createColorImage() {
+    /**
+     * Создать цветное изображение, соответствующие исходному.
+     */
+    public void createColorImage() {
         int height = originalImage.getHeight();
         int length = originalImage.getWidth();
         ImageProcessor originalProcessor = originalImage.getProcessor();
